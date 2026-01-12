@@ -5,7 +5,8 @@ import { Map as MapIcon, Filter, Pencil, Sprout, Route, Layers, Ruler } from 'lu
 import MapContainer from '../components/map/MapContainer';
 import StandPopup from '../components/map/StandPopup';
 import StandFilter from '../components/map/StandFilter';
-import LayerControls, { LayerVisibility } from '../components/map/LayerControls';
+import LayerControls from '../components/map/LayerControls';
+import type { LayerVisibility } from '../components/map/LayerControls';
 import { useAuth } from '../context/AuthContext';
 import type { Stand } from '../types';
 import type { StandFilters } from '../components/map/StandFilter';
