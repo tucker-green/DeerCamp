@@ -1,0 +1,41 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // Helper function to check if user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Helper function to check if file is an image
+    function isImage() {
+      return request.resource.contentType.matches('image/.*');
+    }
+
+    // Helper function to check file size (max 5MB)
+    function isUnder5MB() {
+      return request.resource.size < 5 * 1024 * 1024;
+    }
+
+    // Harvest photos
+    // Path format: harvests/{userId}/{fileName}
+    // - All authenticated users can read any harvest photo
+    // - Users can only upload photos to their own folder
+    // - Photos must be images under 5MB
+    // - Users can only delete their own photos
+    match /harvests/{userId}/{fileName} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() &&
+        request.auth.uid == userId &&
+        isImage() &&
+        isUnder5MB();
+      allow delete: if isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // Deny all other access
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

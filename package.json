@@ -13,6 +13,8 @@
     "deploy:rules": "firebase deploy --only firestore:rules,storage:rules"
   },
   "dependencies": {
+    "@mapbox/mapbox-gl-draw": "^1.5.1",
+    "@types/mapbox__mapbox-gl-draw": "^1.4.9",
     "date-fns": "^4.1.0",
     "firebase": "^12.7.0",
     "framer-motion": "^12.24.10",

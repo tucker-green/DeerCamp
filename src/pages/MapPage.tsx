@@ -1,18 +1,21 @@
 import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Map as MapIcon, Filter } from 'lucide-react';
+import { Map as MapIcon, Filter, Pencil } from 'lucide-react';
 import MapContainer from '../components/map/MapContainer';
 import StandPopup from '../components/map/StandPopup';
 import StandFilter from '../components/map/StandFilter';
+import { useAuth } from '../context/AuthContext';
 import type { Stand } from '../types';
 import type { StandFilters } from '../components/map/StandFilter';
 
 const MapPage = () => {
   const navigate = useNavigate();
+  const { profile } = useAuth();
   const [selectedStand, setSelectedStand] = useState<Stand | null>(null);
   const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState<StandFilters>({ types: [], statuses: [] });
+  const [isDrawingBoundary, setIsDrawingBoundary] = useState(false);
 
   const handleStandClick = useCallback((stand: Stand) => {
     setSelectedStand(stand);
@@ -29,6 +32,23 @@ const MapPage = () => {
     // For MVP, we're just storing the filters
     console.log('Filters updated:', newFilters);
   }, []);
+
+  const handleStartDrawing = useCallback(() => {
+    setIsDrawingBoundary(true);
+    setShowFilters(false);
+    setSelectedStand(null);
+  }, []);
+
+  const handleDrawingComplete = useCallback(() => {
+    setIsDrawingBoundary(false);
+  }, []);
+
+  const handleDrawingCancel = useCallback(() => {
+    setIsDrawingBoundary(false);
+  }, []);
+
+  // Check if user has permission to draw boundaries (owner or manager)
+  const canDrawBoundaries = profile?.role === 'owner' || profile?.role === 'manager';
 
   return (
     <div className="h-screen flex flex-col pt-6 pb-20">
@@ -49,15 +69,32 @@ const MapPage = () => {
         </div>
 
         <div className="flex gap-2">
+          {canDrawBoundaries && (
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={handleStartDrawing}
+              disabled={isDrawingBoundary}
+              className={`glass-panel-strong px-4 py-3 rounded-xl border transition-all flex items-center gap-2 ${
+                isDrawingBoundary
+                  ? 'border-green-500/30 bg-green-500/10 opacity-50 cursor-not-allowed'
+                  : 'border-white/10 hover:border-green-500/30 hover:bg-green-500/10'
+              }`}
+            >
+              <Pencil size={18} className={isDrawingBoundary ? 'text-green-400' : 'text-gray-300'} />
+              <span className="text-sm font-medium text-gray-300 hidden sm:inline">Draw Boundary</span>
+            </motion.button>
+          )}
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={() => setShowFilters(!showFilters)}
+            disabled={isDrawingBoundary}
             className={`glass-panel-strong p-3 rounded-xl border transition-all ${
               showFilters
                 ? 'border-green-500/30 bg-green-500/10'
                 : 'border-white/10 hover:border-white/20'
-            }`}
+            } ${isDrawingBoundary ? 'opacity-50 cursor-not-allowed' : ''}`}
           >
             <Filter size={20} className={showFilters ? 'text-green-400' : 'text-gray-300'} />
           </motion.button>
@@ -71,7 +108,13 @@ const MapPage = () => {
         transition={{ delay: 0.1 }}
         className="flex-1 px-4"
       >
-        <MapContainer onStandClick={handleStandClick} />
+        <MapContainer
+          clubId={profile?.clubId}
+          onStandClick={handleStandClick}
+          isDrawingBoundary={isDrawingBoundary}
+          onBoundaryDrawComplete={handleDrawingComplete}
+          onBoundaryDrawCancel={handleDrawingCancel}
+        />
       </motion.div>
 
       {/* Stand Filter Panel */}

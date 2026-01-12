@@ -89,6 +89,126 @@ export interface Stand {
     updatedAt?: string;
 }
 
+// Property Boundary (polygon)
+export interface PropertyBoundary {
+    id: string;
+    clubId: string;
+    name: string;
+    coordinates: [number, number][]; // Array of [lng, lat] pairs for polygon
+    acres?: number;
+    color?: string; // Hex color for map display
+    strokeWidth?: number;
+    fillOpacity?: number;
+    boundaryType: 'property' | 'neighbor' | 'public-land' | 'buffer-zone';
+    notes?: string;
+    createdAt: string;
+    createdBy: string;
+    updatedAt?: string;
+}
+
+// Food Plot (polygon)
+export interface FoodPlot {
+    id: string;
+    clubId: string;
+    name: string;
+    coordinates: [number, number][]; // Polygon coordinates
+    acres: number;
+    plantedWith?: string; // Crop type (clover, corn, beans, etc.)
+    plantDate?: string;
+    expectedMaturity?: string;
+    lastMaintenance?: string;
+    notes?: string;
+    photos?: string[];
+    createdAt: string;
+    createdBy: string;
+    updatedAt?: string;
+}
+
+// Access Route (line/path)
+export type AccessRouteType = 'road' | 'atv-trail' | 'walking-path' | 'quiet-approach';
+
+export interface AccessRoute {
+    id: string;
+    clubId: string;
+    name: string;
+    type: AccessRouteType;
+    coordinates: [number, number][]; // Line path
+    lengthYards?: number;
+    difficulty?: 'easy' | 'moderate' | 'difficult';
+    seasonal?: boolean; // Only passable certain times of year
+    seasonalNotes?: string; // "Creek crossing - summer only"
+    notes?: string;
+    createdAt: string;
+    createdBy: string;
+    updatedAt?: string;
+}
+
+// Terrain Feature (point marker)
+export type TerrainFeatureType =
+    | 'water-source'
+    | 'bedding-area'
+    | 'oak-grove'
+    | 'thicket'
+    | 'ridge-line'
+    | 'funnel'
+    | 'scrape-area'
+    | 'rub-line'
+    | 'kill-zone';
+
+export interface TerrainFeature {
+    id: string;
+    clubId: string;
+    name: string;
+    type: TerrainFeatureType;
+    lat: number;
+    lng: number;
+    description?: string;
+    radius?: number; // For area features (in yards)
+    season?: string; // When this is active/relevant
+    photos?: string[];
+    notes?: string;
+    createdAt: string;
+    createdBy: string;
+    updatedAt?: string;
+}
+
+// Trail Camera
+export interface TrailCamera {
+    id: string;
+    clubId: string;
+    name: string;
+    lat: number;
+    lng: number;
+    model?: string;
+    installDate?: string;
+    lastChecked?: string;
+    batteryLevel?: number; // 0-100
+    sdCardSpace?: number; // Percentage remaining
+    photoCount?: number;
+    notes?: string;
+    createdAt: string;
+    createdBy: string;
+    updatedAt?: string;
+}
+
+// Map Layer Visibility Settings
+export interface MapLayerSettings {
+    userId: string;
+    visibleLayers: {
+        stands: boolean;
+        propertyBoundaries: boolean;
+        foodPlots: boolean;
+        accessRoutes: boolean;
+        terrainFeatures: boolean;
+        trailCameras: boolean;
+        distanceRings: boolean;
+        topography: boolean;
+        windOverlay: boolean;
+    };
+    distanceRingRadii: number[]; // e.g., [200, 300, 400] yards
+    selectedStandForRings?: string; // Stand ID to show rings around
+}
+
 export interface Harvest {
     id: string;
     userId: string;

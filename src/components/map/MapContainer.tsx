@@ -2,19 +2,35 @@ import { useRef, useEffect } from 'react';
 import mapboxgl from 'mapbox-gl';
 import { useMapbox } from '../../hooks/useMapbox';
 import { useStands } from '../../hooks/useStands';
+import { usePropertyBoundaries } from '../../hooks/usePropertyBoundaries';
 import { createStandMarkerElement } from '../../utils/standMarkerHelpers';
+import { boundaryToGeoJSON } from '../../utils/boundaryDrawHelpers';
+import PropertyBoundaryDrawer from './PropertyBoundaryDrawer';
 import type { Stand } from '../../types';
 
 interface MapContainerProps {
   center?: [number, number];
   zoom?: number;
+  clubId?: string;
   onStandClick?: (stand: Stand) => void;
+  isDrawingBoundary?: boolean;
+  onBoundaryDrawComplete?: () => void;
+  onBoundaryDrawCancel?: () => void;
 }
 
-const MapContainer = ({ center, zoom, onStandClick }: MapContainerProps) => {
+const MapContainer = ({
+  center,
+  zoom,
+  clubId,
+  onStandClick,
+  isDrawingBoundary = false,
+  onBoundaryDrawComplete,
+  onBoundaryDrawCancel,
+}: MapContainerProps) => {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const { map, isLoaded, error } = useMapbox(mapContainerRef, { center, zoom });
   const { stands, loading: standsLoading } = useStands();
+  const { boundaries, loading: boundariesLoading } = usePropertyBoundaries(clubId);
   const markersRef = useRef<Map<string, mapboxgl.Marker>>(new Map());
 
   // Add stand markers to the map
@@ -57,6 +73,71 @@ const MapContainer = ({ center, zoom, onStandClick }: MapContainerProps) => {
     };
   }, [map, isLoaded, stands, standsLoading, onStandClick]);
 
+  // Add property boundaries to the map
+  useEffect(() => {
+    if (!map || !isLoaded || boundariesLoading) return;
+
+    const BOUNDARY_SOURCE_ID = 'property-boundaries';
+    const BOUNDARY_LAYER_FILL_ID = 'property-boundaries-fill';
+    const BOUNDARY_LAYER_LINE_ID = 'property-boundaries-line';
+
+    // Remove existing source and layers if they exist
+    if (map.getLayer(BOUNDARY_LAYER_FILL_ID)) {
+      map.removeLayer(BOUNDARY_LAYER_FILL_ID);
+    }
+    if (map.getLayer(BOUNDARY_LAYER_LINE_ID)) {
+      map.removeLayer(BOUNDARY_LAYER_LINE_ID);
+    }
+    if (map.getSource(BOUNDARY_SOURCE_ID)) {
+      map.removeSource(BOUNDARY_SOURCE_ID);
+    }
+
+    // Add source with boundary features
+    const geojsonFeatures = boundaries.map(boundaryToGeoJSON);
+    map.addSource(BOUNDARY_SOURCE_ID, {
+      type: 'geojson',
+      data: {
+        type: 'FeatureCollection',
+        features: geojsonFeatures,
+      },
+    });
+
+    // Add fill layer
+    map.addLayer({
+      id: BOUNDARY_LAYER_FILL_ID,
+      type: 'fill',
+      source: BOUNDARY_SOURCE_ID,
+      paint: {
+        'fill-color': ['get', 'color', ['properties']],
+        'fill-opacity': 0.2,
+      },
+    });
+
+    // Add line layer
+    map.addLayer({
+      id: BOUNDARY_LAYER_LINE_ID,
+      type: 'line',
+      source: BOUNDARY_SOURCE_ID,
+      paint: {
+        'line-color': ['get', 'color', ['properties']],
+        'line-width': 3,
+      },
+    });
+
+    // Cleanup on unmount
+    return () => {
+      if (map.getLayer(BOUNDARY_LAYER_FILL_ID)) {
+        map.removeLayer(BOUNDARY_LAYER_FILL_ID);
+      }
+      if (map.getLayer(BOUNDARY_LAYER_LINE_ID)) {
+        map.removeLayer(BOUNDARY_LAYER_LINE_ID);
+      }
+      if (map.getSource(BOUNDARY_SOURCE_ID)) {
+        map.removeSource(BOUNDARY_SOURCE_ID);
+      }
+    };
+  }, [map, isLoaded, boundaries, boundariesLoading]);
+
   if (error) {
     return (
       <div className="h-full flex items-center justify-center glass-panel-strong p-8 rounded-2xl">
@@ -81,6 +162,17 @@ const MapContainer = ({ center, zoom, onStandClick }: MapContainerProps) => {
             <p className="text-gray-400">Loading map...</p>
           </div>
         </div>
+      )}
+
+      {/* Property Boundary Drawer */}
+      {map && clubId && isDrawingBoundary && onBoundaryDrawComplete && onBoundaryDrawCancel && (
+        <PropertyBoundaryDrawer
+          map={map}
+          clubId={clubId}
+          isDrawing={isDrawingBoundary}
+          onDrawingComplete={onBoundaryDrawComplete}
+          onCancel={onBoundaryDrawCancel}
+        />
       )}
     </div>
   );

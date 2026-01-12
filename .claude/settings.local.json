@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cat:*)",
+      "Bash(firebase deploy:*)",
+      "Bash(npm install)",
+      "Bash(npm run dev:*)",
+      "Bash(timeout 5 tail:*)",
+      "Bash(git init:*)",
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nAdd stand booking system MVP with daily calendar and conflict detection\n\nImplement a complete booking system for hunting stand reservations with real-time updates, conflict detection, and user-friendly calendar interface.\n\nFeatures:\n- Daily calendar view showing all stands with morning/evening hunt splits\n- Create booking form with stand selection, date picker, and time slot options\n- My bookings page with upcoming/past/cancelled filters and check-in/check-out\n- Real-time Firestore listeners for live booking updates\n- Conflict detection algorithm preventing double-bookings\n- Time validation \\(morning 5am-11am, evening 3pm-8pm, all-day 5am-8pm\\)\n\nTechnical implementation:\n- Custom useBookings React hook with full CRUD operations\n- Booking validation and helper utilities \\(bookingHelpers.ts\\)\n- TypeScript interfaces for type safety\n- Firestore composite indexes for optimized queries\n- Security rules for booking collection\n- \"Stand Board\" navigation link with Calendar icon\n- Fixed layout padding to prevent navbar overlap \\(pt-24\\)\n\nFiles added:\n- src/pages/BookingsPage.tsx - Daily calendar view\n- src/pages/NewBookingPage.tsx - Create booking form\n- src/pages/MyBookingsPage.tsx - User booking management\n- src/hooks/useBookings.ts - Booking data and CRUD operations\n- src/utils/bookingHelpers.ts - Validation and conflict detection\n- src/types/index.ts - TypeScript type definitions\n- firestore.indexes.json - Database query optimization\n\nFiles modified:\n- src/App.tsx - Added booking routes and layout padding fix\n- src/components/Navbar.tsx - Added Stand Board navigation link\n\nCo-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git commit:*)",
+      "Bash(taskkill:*)",
+      "Bash(start chrome:*)",
+      "Bash(npx tsc:*)",
+      "Bash(timeout 3 tail:*)",
+      "Bash(npm run build:*)",
+      "Bash(timeout:*)",
+      "Bash(npm install:*)",
+      "Bash(if not exist \"src\\\\config\" mkdir \"src\\\\config\")"
+    ]
+  }
+}
