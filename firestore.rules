@@ -35,11 +35,10 @@ service cloud.firestore {
       allow read: if isAuthenticated();
       allow create: if isAuthenticated() && request.auth.uid == userId;
 
-      // Allow update if: own profile OR manager editing
-      allow update: if isOwner(userId) || isOwnerOrManager();
-
-      // Prevent role changes unless user is owner
-      allow update: if request.resource.data.role == resource.data.role || isOwnerUser();
+      // Allow update if: (own profile OR manager editing) AND (role unchanged OR updater is owner)
+      // This prevents privilege escalation - managers cannot change roles
+      allow update: if (isOwner(userId) || isOwnerOrManager()) &&
+                      (request.resource.data.role == resource.data.role || isOwnerUser());
 
       allow delete: if isOwnerUser();
     }
