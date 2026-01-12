@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Map as MapIcon, Filter, Pencil, Sprout } from 'lucide-react';
+import { Map as MapIcon, Filter, Pencil, Sprout, Route } from 'lucide-react';
 import MapContainer from '../components/map/MapContainer';
 import StandPopup from '../components/map/StandPopup';
 import StandFilter from '../components/map/StandFilter';
@@ -17,6 +17,7 @@ const MapPage = () => {
   const [filters, setFilters] = useState<StandFilters>({ types: [], statuses: [] });
   const [isDrawingBoundary, setIsDrawingBoundary] = useState(false);
   const [isDrawingFoodPlot, setIsDrawingFoodPlot] = useState(false);
+  const [isDrawingAccessRoute, setIsDrawingAccessRoute] = useState(false);
 
   const handleStandClick = useCallback((stand: Stand) => {
     setSelectedStand(stand);
@@ -37,6 +38,7 @@ const MapPage = () => {
   const handleStartDrawingBoundary = useCallback(() => {
     setIsDrawingBoundary(true);
     setIsDrawingFoodPlot(false);
+    setIsDrawingAccessRoute(false);
     setShowFilters(false);
     setSelectedStand(null);
   }, []);
@@ -52,6 +54,7 @@ const MapPage = () => {
   const handleStartDrawingFoodPlot = useCallback(() => {
     setIsDrawingFoodPlot(true);
     setIsDrawingBoundary(false);
+    setIsDrawingAccessRoute(false);
     setShowFilters(false);
     setSelectedStand(null);
   }, []);
@@ -64,9 +67,25 @@ const MapPage = () => {
     setIsDrawingFoodPlot(false);
   }, []);
 
+  const handleStartDrawingAccessRoute = useCallback(() => {
+    setIsDrawingAccessRoute(true);
+    setIsDrawingBoundary(false);
+    setIsDrawingFoodPlot(false);
+    setShowFilters(false);
+    setSelectedStand(null);
+  }, []);
+
+  const handleAccessRouteDrawComplete = useCallback(() => {
+    setIsDrawingAccessRoute(false);
+  }, []);
+
+  const handleAccessRouteDrawCancel = useCallback(() => {
+    setIsDrawingAccessRoute(false);
+  }, []);
+
   // Check if user has permission to draw boundaries (owner or manager)
   const canDrawBoundaries = profile?.role === 'owner' || profile?.role === 'manager';
-  const isDrawing = isDrawingBoundary || isDrawingFoodPlot;
+  const isDrawing = isDrawingBoundary || isDrawingFoodPlot || isDrawingAccessRoute;
 
   return (
     <div className="h-screen flex flex-col pt-6 pb-20">
@@ -121,6 +140,22 @@ const MapPage = () => {
                 <Sprout size={18} className={isDrawingFoodPlot ? 'text-green-400' : 'text-gray-300'} />
                 <span className="text-sm font-medium text-gray-300 hidden sm:inline">Food Plot</span>
               </motion.button>
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={handleStartDrawingAccessRoute}
+                disabled={isDrawing}
+                className={`glass-panel-strong px-4 py-3 rounded-xl border transition-all flex items-center gap-2 ${
+                  isDrawingAccessRoute
+                    ? 'border-amber-500/30 bg-amber-500/10'
+                    : isDrawing
+                    ? 'opacity-50 cursor-not-allowed border-white/10'
+                    : 'border-white/10 hover:border-amber-500/30 hover:bg-amber-500/10'
+                }`}
+              >
+                <Route size={18} className={isDrawingAccessRoute ? 'text-amber-400' : 'text-gray-300'} />
+                <span className="text-sm font-medium text-gray-300 hidden sm:inline">Route</span>
+              </motion.button>
             </>
           )}
           <motion.button
@@ -155,6 +190,9 @@ const MapPage = () => {
           isDrawingFoodPlot={isDrawingFoodPlot}
           onFoodPlotDrawComplete={handleFoodPlotDrawComplete}
           onFoodPlotDrawCancel={handleFoodPlotDrawCancel}
+          isDrawingAccessRoute={isDrawingAccessRoute}
+          onAccessRouteDrawComplete={handleAccessRouteDrawComplete}
+          onAccessRouteDrawCancel={handleAccessRouteDrawCancel}
         />
       </motion.div>
 

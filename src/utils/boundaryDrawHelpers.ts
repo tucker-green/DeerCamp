@@ -228,6 +228,14 @@ export function foodPlotToGeoJSON(plot: FoodPlot) {
 
 // Convert AccessRoute to GeoJSON feature for display
 export function routeToGeoJSON(route: AccessRoute) {
+  // Color mapping for route types
+  const routeColors: Record<string, string> = {
+    'road': '#8b5e3c',
+    'atv-trail': '#d4a373',
+    'walking-path': '#e9c46a',
+    'quiet-approach': '#6b7280',
+  };
+
   return {
     type: 'Feature' as const,
     id: route.id,
@@ -236,6 +244,7 @@ export function routeToGeoJSON(route: AccessRoute) {
       name: route.name,
       type: route.type,
       lengthYards: route.lengthYards,
+      color: routeColors[route.type] || '#d4a373',
     },
     geometry: {
       type: 'LineString' as const,
