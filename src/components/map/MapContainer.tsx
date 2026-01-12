@@ -5,8 +5,10 @@ import { useStands } from '../../hooks/useStands';
 import { usePropertyBoundaries } from '../../hooks/usePropertyBoundaries';
 import { useFoodPlots } from '../../hooks/useFoodPlots';
 import { useAccessRoutes } from '../../hooks/useAccessRoutes';
+import { useTerrainFeatures } from '../../hooks/useTerrainFeatures';
 import { createStandMarkerElement } from '../../utils/standMarkerHelpers';
-import { boundaryToGeoJSON, foodPlotToGeoJSON, routeToGeoJSON } from '../../utils/boundaryDrawHelpers';
+import { createTerrainFeatureMarkerElement } from '../../utils/terrainFeatureHelpers';
+import { boundaryToGeoJSON, foodPlotToGeoJSON, routeToGeoJSON, createCircle } from '../../utils/boundaryDrawHelpers';
 import PropertyBoundaryDrawer from './PropertyBoundaryDrawer';
 import FoodPlotDrawer from './FoodPlotDrawer';
 import AccessRouteDrawer from './AccessRouteDrawer';
@@ -49,7 +51,9 @@ const MapContainer = ({
   const { boundaries, loading: boundariesLoading } = usePropertyBoundaries(clubId);
   const { foodPlots, loading: foodPlotsLoading } = useFoodPlots(clubId);
   const { routes, loading: routesLoading } = useAccessRoutes(clubId);
+  const { features, loading: featuresLoading } = useTerrainFeatures(clubId);
   const markersRef = useRef<Map<string, mapboxgl.Marker>>(new Map());
+  const featureMarkersRef = useRef<Map<string, mapboxgl.Marker>>(new Map());
 
   // Add stand markers to the map
   useEffect(() => {
@@ -288,6 +292,96 @@ const MapContainer = ({
       }
     };
   }, [map, isLoaded, routes, routesLoading]);
+
+  // Add terrain feature markers to the map
+  useEffect(() => {
+    if (!map || !isLoaded || featuresLoading) return;
+
+    // Remove old markers
+    featureMarkersRef.current.forEach(marker => marker.remove());
+    featureMarkersRef.current.clear();
+
+    // Add new markers for each terrain feature
+    features.forEach(feature => {
+      const el = createTerrainFeatureMarkerElement(feature.type);
+
+      const marker = new mapboxgl.Marker({
+        element: el,
+        anchor: 'center',
+      })
+        .setLngLat([feature.lng, feature.lat])
+        .addTo(map);
+
+      // Add radius circle if specified
+      if (feature.radius && feature.radius > 0) {
+        const CIRCLE_SOURCE_ID = `terrain-feature-circle-${feature.id}`;
+        const CIRCLE_LAYER_ID = `terrain-feature-circle-layer-${feature.id}`;
+
+        // Remove existing circle if it exists
+        if (map.getLayer(CIRCLE_LAYER_ID)) {
+          map.removeLayer(CIRCLE_LAYER_ID);
+        }
+        if (map.getSource(CIRCLE_SOURCE_ID)) {
+          map.removeSource(CIRCLE_SOURCE_ID);
+        }
+
+        // Create circle
+        const radiusInMeters = feature.radius * 0.9144; // Convert yards to meters
+        const circleGeoJSON = createCircle([feature.lng, feature.lat], radiusInMeters);
+
+        map.addSource(CIRCLE_SOURCE_ID, {
+          type: 'geojson',
+          data: circleGeoJSON,
+        });
+
+        map.addLayer({
+          id: CIRCLE_LAYER_ID,
+          type: 'fill',
+          source: CIRCLE_SOURCE_ID,
+          paint: {
+            'fill-color': '#4a9eff',
+            'fill-opacity': 0.15,
+          },
+        });
+
+        map.addLayer({
+          id: `${CIRCLE_LAYER_ID}-outline`,
+          type: 'line',
+          source: CIRCLE_SOURCE_ID,
+          paint: {
+            'line-color': '#4a9eff',
+            'line-width': 2,
+            'line-dasharray': [2, 2],
+          },
+        });
+      }
+
+      featureMarkersRef.current.set(feature.id, marker);
+    });
+
+    // Cleanup markers on unmount
+    return () => {
+      featureMarkersRef.current.forEach(marker => marker.remove());
+
+      // Cleanup circles
+      features.forEach(feature => {
+        if (feature.radius) {
+          const CIRCLE_LAYER_ID = `terrain-feature-circle-layer-${feature.id}`;
+          const CIRCLE_SOURCE_ID = `terrain-feature-circle-${feature.id}`;
+
+          if (map.getLayer(`${CIRCLE_LAYER_ID}-outline`)) {
+            map.removeLayer(`${CIRCLE_LAYER_ID}-outline`);
+          }
+          if (map.getLayer(CIRCLE_LAYER_ID)) {
+            map.removeLayer(CIRCLE_LAYER_ID);
+          }
+          if (map.getSource(CIRCLE_SOURCE_ID)) {
+            map.removeSource(CIRCLE_SOURCE_ID);
+          }
+        }
+      });
+    };
+  }, [map, isLoaded, features, featuresLoading]);
 
   if (error) {
     return (
