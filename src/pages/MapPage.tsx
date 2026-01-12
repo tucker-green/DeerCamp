@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Map as MapIcon, Filter, Pencil } from 'lucide-react';
+import { Map as MapIcon, Filter, Pencil, Sprout } from 'lucide-react';
 import MapContainer from '../components/map/MapContainer';
 import StandPopup from '../components/map/StandPopup';
 import StandFilter from '../components/map/StandFilter';
@@ -16,6 +16,7 @@ const MapPage = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState<StandFilters>({ types: [], statuses: [] });
   const [isDrawingBoundary, setIsDrawingBoundary] = useState(false);
+  const [isDrawingFoodPlot, setIsDrawingFoodPlot] = useState(false);
 
   const handleStandClick = useCallback((stand: Stand) => {
     setSelectedStand(stand);
@@ -33,22 +34,39 @@ const MapPage = () => {
     console.log('Filters updated:', newFilters);
   }, []);
 
-  const handleStartDrawing = useCallback(() => {
+  const handleStartDrawingBoundary = useCallback(() => {
     setIsDrawingBoundary(true);
+    setIsDrawingFoodPlot(false);
     setShowFilters(false);
     setSelectedStand(null);
   }, []);
 
-  const handleDrawingComplete = useCallback(() => {
+  const handleBoundaryDrawComplete = useCallback(() => {
     setIsDrawingBoundary(false);
   }, []);
 
-  const handleDrawingCancel = useCallback(() => {
+  const handleBoundaryDrawCancel = useCallback(() => {
     setIsDrawingBoundary(false);
+  }, []);
+
+  const handleStartDrawingFoodPlot = useCallback(() => {
+    setIsDrawingFoodPlot(true);
+    setIsDrawingBoundary(false);
+    setShowFilters(false);
+    setSelectedStand(null);
+  }, []);
+
+  const handleFoodPlotDrawComplete = useCallback(() => {
+    setIsDrawingFoodPlot(false);
+  }, []);
+
+  const handleFoodPlotDrawCancel = useCallback(() => {
+    setIsDrawingFoodPlot(false);
   }, []);
 
   // Check if user has permission to draw boundaries (owner or manager)
   const canDrawBoundaries = profile?.role === 'owner' || profile?.role === 'manager';
+  const isDrawing = isDrawingBoundary || isDrawingFoodPlot;
 
   return (
     <div className="h-screen flex flex-col pt-6 pb-20">
@@ -70,31 +88,51 @@ const MapPage = () => {
 
         <div className="flex gap-2">
           {canDrawBoundaries && (
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={handleStartDrawing}
-              disabled={isDrawingBoundary}
-              className={`glass-panel-strong px-4 py-3 rounded-xl border transition-all flex items-center gap-2 ${
-                isDrawingBoundary
-                  ? 'border-green-500/30 bg-green-500/10 opacity-50 cursor-not-allowed'
-                  : 'border-white/10 hover:border-green-500/30 hover:bg-green-500/10'
-              }`}
-            >
-              <Pencil size={18} className={isDrawingBoundary ? 'text-green-400' : 'text-gray-300'} />
-              <span className="text-sm font-medium text-gray-300 hidden sm:inline">Draw Boundary</span>
-            </motion.button>
+            <>
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={handleStartDrawingBoundary}
+                disabled={isDrawing}
+                className={`glass-panel-strong px-4 py-3 rounded-xl border transition-all flex items-center gap-2 ${
+                  isDrawingBoundary
+                    ? 'border-green-500/30 bg-green-500/10'
+                    : isDrawing
+                    ? 'opacity-50 cursor-not-allowed border-white/10'
+                    : 'border-white/10 hover:border-green-500/30 hover:bg-green-500/10'
+                }`}
+              >
+                <Pencil size={18} className={isDrawingBoundary ? 'text-green-400' : 'text-gray-300'} />
+                <span className="text-sm font-medium text-gray-300 hidden sm:inline">Boundary</span>
+              </motion.button>
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={handleStartDrawingFoodPlot}
+                disabled={isDrawing}
+                className={`glass-panel-strong px-4 py-3 rounded-xl border transition-all flex items-center gap-2 ${
+                  isDrawingFoodPlot
+                    ? 'border-green-500/30 bg-green-500/10'
+                    : isDrawing
+                    ? 'opacity-50 cursor-not-allowed border-white/10'
+                    : 'border-white/10 hover:border-green-500/30 hover:bg-green-500/10'
+                }`}
+              >
+                <Sprout size={18} className={isDrawingFoodPlot ? 'text-green-400' : 'text-gray-300'} />
+                <span className="text-sm font-medium text-gray-300 hidden sm:inline">Food Plot</span>
+              </motion.button>
+            </>
           )}
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={() => setShowFilters(!showFilters)}
-            disabled={isDrawingBoundary}
+            disabled={isDrawing}
             className={`glass-panel-strong p-3 rounded-xl border transition-all ${
               showFilters
                 ? 'border-green-500/30 bg-green-500/10'
                 : 'border-white/10 hover:border-white/20'
-            } ${isDrawingBoundary ? 'opacity-50 cursor-not-allowed' : ''}`}
+            } ${isDrawing ? 'opacity-50 cursor-not-allowed' : ''}`}
           >
             <Filter size={20} className={showFilters ? 'text-green-400' : 'text-gray-300'} />
           </motion.button>
@@ -112,8 +150,11 @@ const MapPage = () => {
           clubId={profile?.clubId}
           onStandClick={handleStandClick}
           isDrawingBoundary={isDrawingBoundary}
-          onBoundaryDrawComplete={handleDrawingComplete}
-          onBoundaryDrawCancel={handleDrawingCancel}
+          onBoundaryDrawComplete={handleBoundaryDrawComplete}
+          onBoundaryDrawCancel={handleBoundaryDrawCancel}
+          isDrawingFoodPlot={isDrawingFoodPlot}
+          onFoodPlotDrawComplete={handleFoodPlotDrawComplete}
+          onFoodPlotDrawCancel={handleFoodPlotDrawCancel}
         />
       </motion.div>
 

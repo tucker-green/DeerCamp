@@ -217,6 +217,7 @@ export function foodPlotToGeoJSON(plot: FoodPlot) {
       name: plot.name,
       plantedWith: plot.plantedWith,
       acres: plot.acres,
+      color: '#52b788', // Bright green for food plots
     },
     geometry: {
       type: 'Polygon' as const,

@@ -3,9 +3,11 @@ import mapboxgl from 'mapbox-gl';
 import { useMapbox } from '../../hooks/useMapbox';
 import { useStands } from '../../hooks/useStands';
 import { usePropertyBoundaries } from '../../hooks/usePropertyBoundaries';
+import { useFoodPlots } from '../../hooks/useFoodPlots';
 import { createStandMarkerElement } from '../../utils/standMarkerHelpers';
-import { boundaryToGeoJSON } from '../../utils/boundaryDrawHelpers';
+import { boundaryToGeoJSON, foodPlotToGeoJSON } from '../../utils/boundaryDrawHelpers';
 import PropertyBoundaryDrawer from './PropertyBoundaryDrawer';
+import FoodPlotDrawer from './FoodPlotDrawer';
 import type { Stand } from '../../types';
 
 interface MapContainerProps {
@@ -16,6 +18,9 @@ interface MapContainerProps {
   isDrawingBoundary?: boolean;
   onBoundaryDrawComplete?: () => void;
   onBoundaryDrawCancel?: () => void;
+  isDrawingFoodPlot?: boolean;
+  onFoodPlotDrawComplete?: () => void;
+  onFoodPlotDrawCancel?: () => void;
 }
 
 const MapContainer = ({
@@ -26,11 +31,15 @@ const MapContainer = ({
   isDrawingBoundary = false,
   onBoundaryDrawComplete,
   onBoundaryDrawCancel,
+  isDrawingFoodPlot = false,
+  onFoodPlotDrawComplete,
+  onFoodPlotDrawCancel,
 }: MapContainerProps) => {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const { map, isLoaded, error } = useMapbox(mapContainerRef, { center, zoom });
   const { stands, loading: standsLoading } = useStands();
   const { boundaries, loading: boundariesLoading } = usePropertyBoundaries(clubId);
+  const { foodPlots, loading: foodPlotsLoading } = useFoodPlots(clubId);
   const markersRef = useRef<Map<string, mapboxgl.Marker>>(new Map());
 
   // Add stand markers to the map
@@ -138,6 +147,71 @@ const MapContainer = ({
     };
   }, [map, isLoaded, boundaries, boundariesLoading]);
 
+  // Add food plots to the map
+  useEffect(() => {
+    if (!map || !isLoaded || foodPlotsLoading) return;
+
+    const FOOD_PLOT_SOURCE_ID = 'food-plots';
+    const FOOD_PLOT_LAYER_FILL_ID = 'food-plots-fill';
+    const FOOD_PLOT_LAYER_LINE_ID = 'food-plots-line';
+
+    // Remove existing source and layers if they exist
+    if (map.getLayer(FOOD_PLOT_LAYER_FILL_ID)) {
+      map.removeLayer(FOOD_PLOT_LAYER_FILL_ID);
+    }
+    if (map.getLayer(FOOD_PLOT_LAYER_LINE_ID)) {
+      map.removeLayer(FOOD_PLOT_LAYER_LINE_ID);
+    }
+    if (map.getSource(FOOD_PLOT_SOURCE_ID)) {
+      map.removeSource(FOOD_PLOT_SOURCE_ID);
+    }
+
+    // Add source with food plot features
+    const geojsonFeatures = foodPlots.map(foodPlotToGeoJSON);
+    map.addSource(FOOD_PLOT_SOURCE_ID, {
+      type: 'geojson',
+      data: {
+        type: 'FeatureCollection',
+        features: geojsonFeatures,
+      },
+    });
+
+    // Add fill layer (bright green for food plots)
+    map.addLayer({
+      id: FOOD_PLOT_LAYER_FILL_ID,
+      type: 'fill',
+      source: FOOD_PLOT_SOURCE_ID,
+      paint: {
+        'fill-color': '#52b788',
+        'fill-opacity': 0.3,
+      },
+    });
+
+    // Add line layer
+    map.addLayer({
+      id: FOOD_PLOT_LAYER_LINE_ID,
+      type: 'line',
+      source: FOOD_PLOT_SOURCE_ID,
+      paint: {
+        'line-color': '#52b788',
+        'line-width': 3,
+      },
+    });
+
+    // Cleanup on unmount
+    return () => {
+      if (map.getLayer(FOOD_PLOT_LAYER_FILL_ID)) {
+        map.removeLayer(FOOD_PLOT_LAYER_FILL_ID);
+      }
+      if (map.getLayer(FOOD_PLOT_LAYER_LINE_ID)) {
+        map.removeLayer(FOOD_PLOT_LAYER_LINE_ID);
+      }
+      if (map.getSource(FOOD_PLOT_SOURCE_ID)) {
+        map.removeSource(FOOD_PLOT_SOURCE_ID);
+      }
+    };
+  }, [map, isLoaded, foodPlots, foodPlotsLoading]);
+
   if (error) {
     return (
       <div className="h-full flex items-center justify-center glass-panel-strong p-8 rounded-2xl">
@@ -172,6 +246,17 @@ const MapContainer = ({
           isDrawing={isDrawingBoundary}
           onDrawingComplete={onBoundaryDrawComplete}
           onCancel={onBoundaryDrawCancel}
+        />
+      )}
+
+      {/* Food Plot Drawer */}
+      {map && clubId && isDrawingFoodPlot && onFoodPlotDrawComplete && onFoodPlotDrawCancel && (
+        <FoodPlotDrawer
+          map={map}
+          clubId={clubId}
+          isDrawing={isDrawingFoodPlot}
+          onDrawingComplete={onFoodPlotDrawComplete}
+          onCancel={onFoodPlotDrawCancel}
         />
       )}
     </div>
