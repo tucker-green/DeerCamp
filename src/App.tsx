@@ -9,6 +9,7 @@ import NewBookingPage from './pages/NewBookingPage';
 import MyBookingsPage from './pages/MyBookingsPage';
 import MembersPage from './pages/MembersPage';
 import InviteMemberPage from './pages/InviteMemberPage';
+import MapPage from './pages/MapPage';
 import Navbar from './components/Navbar';
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -35,6 +36,7 @@ function App() {
                         <Route path="/" element={<Dashboard />} />
                         <Route path="/harvests" element={<HarvestPage />} />
                         <Route path="/stands" element={<StandsPage />} />
+                        <Route path="/map" element={<MapPage />} />
                         <Route path="/bookings" element={<BookingsPage />} />
                         <Route path="/bookings/new" element={<NewBookingPage />} />
                         <Route path="/bookings/mine" element={<MyBookingsPage />} />

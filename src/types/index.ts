@@ -68,6 +68,8 @@ export interface Club {
     };
 }
 
+export type WindDirection = 'N' | 'NE' | 'E' | 'SE' | 'S' | 'SW' | 'W' | 'NW';
+
 export interface Stand {
     id: string;
     name: string;
@@ -75,6 +77,16 @@ export interface Stand {
     lat: number;
     lng: number;
     status: 'available' | 'reserved' | 'occupied' | 'maintenance';
+
+    // Map-specific fields
+    description?: string;
+    photos?: string[];
+    heightFeet?: number;
+    capacity?: number;
+    bestWindDirections?: WindDirection[];
+    condition?: 'excellent' | 'good' | 'fair' | 'needs-repair';
+    notes?: string;
+    updatedAt?: string;
 }
 
 export interface Harvest {

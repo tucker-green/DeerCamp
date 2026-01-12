@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { auth } from '../firebase/config';
-import { LogOut, Home, Map as MapIcon, ClipboardList, Users, Menu, X, Sparkles, Calendar } from 'lucide-react';
+import { LogOut, Home, Map as MapIcon, ClipboardList, Users, Menu, X, Sparkles, Calendar, Globe } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -20,6 +20,7 @@ const Navbar = () => {
     const navItems = [
         { icon: <Home size={16} />, label: 'Overview', path: '/' },
         { icon: <MapIcon size={16} />, label: 'Stands', path: '/stands' },
+        { icon: <Globe size={16} />, label: 'Map', path: '/map' },
         { icon: <Calendar size={16} />, label: 'Stand Board', path: '/bookings' },
         { icon: <ClipboardList size={16} />, label: 'Harvests', path: '/harvests' },
         { icon: <Users size={16} />, label: 'Members', path: '/members' },
