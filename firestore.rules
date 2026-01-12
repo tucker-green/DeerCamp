@@ -19,14 +19,29 @@ service cloud.firestore {
       return isAuthenticated() && request.auth.uid == userId;
     }
 
+    // Helper function to check if user is owner
+    function isOwnerUser() {
+      return isAuthenticated() &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'owner';
+    }
+
     // Users collection
     // - All authenticated users can read any user profile
-    // - Users can only create/update their own profile
+    // - Users can create their own profile on signup
+    // - Users can update their own profile OR managers can edit members
+    // - Role changes only allowed by owners
+    // - Owners only can delete
     match /users/{userId} {
       allow read: if isAuthenticated();
       allow create: if isAuthenticated() && request.auth.uid == userId;
-      allow update: if isOwner(userId);
-      allow delete: if false; // Prevent deletion of user profiles
+
+      // Allow update if: own profile OR manager editing
+      allow update: if isOwner(userId) || isOwnerOrManager();
+
+      // Prevent role changes unless user is owner
+      allow update: if request.resource.data.role == resource.data.role || isOwnerUser();
+
+      allow delete: if isOwnerUser();
     }
 
     // Stands collection
@@ -61,6 +76,20 @@ service cloud.firestore {
       allow update: if isAuthenticated() &&
         resource.data.userId == request.auth.uid;
       allow delete: if isOwner(resource.data.userId) || isOwnerOrManager();
+    }
+
+    // Invites collection
+    // - Managers+ and invitee can read invites
+    // - Managers+ can create invites
+    // - Creator or managers can update/cancel invites
+    // - Managers+ can delete invites
+    match /invites/{inviteId} {
+      allow read: if isAuthenticated() &&
+        (isOwnerOrManager() || resource.data.email == request.auth.token.email);
+      allow create: if isAuthenticated() && isOwnerOrManager();
+      allow update: if isAuthenticated() &&
+        (resource.data.invitedBy == request.auth.uid || isOwnerOrManager());
+      allow delete: if isOwnerOrManager();
     }
 
     // Deny all other access

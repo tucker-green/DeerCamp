@@ -1,4 +1,8 @@
 export type UserRole = 'owner' | 'manager' | 'member';
+export type MembershipTier = 'full' | 'family' | 'youth' | 'guest';
+export type MemberStatus = 'active' | 'inactive' | 'suspended';
+export type ApprovalStatus = 'pending' | 'approved' | 'rejected';
+export type DuesStatus = 'paid' | 'unpaid' | 'overdue' | 'exempt';
 
 export interface UserProfile {
     uid: string;
@@ -7,6 +11,49 @@ export interface UserProfile {
     role: UserRole;
     clubId?: string;
     joinDate: string;
+
+    // Member Management
+    membershipTier?: MembershipTier;
+    membershipStatus?: MemberStatus;
+    approvalStatus?: ApprovalStatus;
+
+    // Contact Information
+    phone?: string;
+    address?: {
+        street: string;
+        city: string;
+        state: string;
+        zip: string;
+    };
+
+    // Emergency Contact
+    emergencyContact?: {
+        name: string;
+        phone: string;
+        relationship: string;
+    };
+
+    // Hunter Safety
+    hunterSafetyCert?: {
+        number: string;
+        expirationDate: string;
+        verified: boolean;
+    };
+
+    // Dues Tracking
+    duesStatus?: DuesStatus;
+    duesPaidUntil?: string;
+    lastDuesPayment?: string;
+
+    // Profile Enhancements
+    avatar?: string;
+    bio?: string;
+
+    // Audit Fields
+    invitedBy?: string;
+    approvedBy?: string;
+    lastActive?: string;
+    profileCompleteness?: number; // 0-100%
 }
 
 export interface Club {
@@ -63,4 +110,29 @@ export interface Booking {
     updatedAt: string;
     cancelledAt?: string;
     cancellationReason?: string;
+}
+
+export type InviteStatus = 'pending' | 'accepted' | 'expired' | 'cancelled';
+
+export interface Invite {
+    id: string;
+    email: string;
+    role: UserRole;
+    membershipTier: MembershipTier;
+    clubId: string;
+
+    // Invitation Details
+    invitedBy: string;         // uid
+    invitedByName: string;     // cached
+    message?: string;
+
+    // Status & Lifecycle
+    status: InviteStatus;
+    createdAt: string;
+    expiresAt: string;         // 7 days from creation
+    acceptedAt?: string;
+    cancelledAt?: string;
+
+    // Invite Code
+    inviteCode: string;        // unique 8-char code
 }
