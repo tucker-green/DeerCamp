@@ -6,6 +6,7 @@ import { usePropertyBoundaries } from '../../hooks/usePropertyBoundaries';
 import { useFoodPlots } from '../../hooks/useFoodPlots';
 import { useAccessRoutes } from '../../hooks/useAccessRoutes';
 import { useTerrainFeatures } from '../../hooks/useTerrainFeatures';
+import { useTrailCameras } from '../../hooks/useTrailCameras';
 import { createStandMarkerElement } from '../../utils/standMarkerHelpers';
 import { createTerrainFeatureMarkerElement } from '../../utils/terrainFeatureHelpers';
 import { boundaryToGeoJSON, foodPlotToGeoJSON, routeToGeoJSON, createCircle } from '../../utils/boundaryDrawHelpers';
@@ -52,8 +53,10 @@ const MapContainer = ({
   const { foodPlots, loading: foodPlotsLoading } = useFoodPlots(clubId);
   const { routes, loading: routesLoading } = useAccessRoutes(clubId);
   const { features, loading: featuresLoading } = useTerrainFeatures(clubId);
+  const { cameras, loading: camerasLoading } = useTrailCameras(clubId);
   const markersRef = useRef<Map<string, mapboxgl.Marker>>(new Map());
   const featureMarkersRef = useRef<Map<string, mapboxgl.Marker>>(new Map());
+  const cameraMarkersRef = useRef<Map<string, mapboxgl.Marker>>(new Map());
 
   // Add stand markers to the map
   useEffect(() => {
@@ -382,6 +385,73 @@ const MapContainer = ({
       });
     };
   }, [map, isLoaded, features, featuresLoading]);
+
+  // Add trail camera markers to the map
+  useEffect(() => {
+    if (!map || !isLoaded || camerasLoading) return;
+
+    // Remove old markers
+    cameraMarkersRef.current.forEach(marker => marker.remove());
+    cameraMarkersRef.current.clear();
+
+    // Add new markers for each camera
+    cameras.forEach(camera => {
+      const el = document.createElement('div');
+      el.className = 'trail-camera-marker';
+
+      // Determine battery status color
+      let batteryColor = '#22c55e'; // green
+      if (camera.batteryLevel && camera.batteryLevel < 30) {
+        batteryColor = '#e63946'; // red
+      } else if (camera.batteryLevel && camera.batteryLevel < 60) {
+        batteryColor = '#e9c46a'; // amber
+      }
+
+      el.style.cssText = `
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        background: linear-gradient(135deg, #374151, #1f2937);
+        border: 2px solid ${batteryColor};
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 16px;
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+      `;
+
+      el.textContent = '📷';
+
+      // Hover effect
+      el.addEventListener('mouseenter', () => {
+        el.style.transform = 'scale(1.2)';
+        el.style.boxShadow = `0 6px 20px ${batteryColor}80`;
+        el.style.zIndex = '1000';
+      });
+
+      el.addEventListener('mouseleave', () => {
+        el.style.transform = 'scale(1)';
+        el.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.4)';
+        el.style.zIndex = '';
+      });
+
+      const marker = new mapboxgl.Marker({
+        element: el,
+        anchor: 'center',
+      })
+        .setLngLat([camera.lng, camera.lat])
+        .addTo(map);
+
+      cameraMarkersRef.current.set(camera.id, marker);
+    });
+
+    // Cleanup markers on unmount
+    return () => {
+      cameraMarkersRef.current.forEach(marker => marker.remove());
+    };
+  }, [map, isLoaded, cameras, camerasLoading]);
 
   if (error) {
     return (
