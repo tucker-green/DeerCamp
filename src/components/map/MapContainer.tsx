@@ -20,6 +20,8 @@ interface MapContainerProps {
   zoom?: number;
   clubId?: string;
   onStandClick?: (stand: Stand) => void;
+  selectedStandForRings?: string; // Stand ID to show distance rings around
+  showDistanceRings?: boolean;
   isDrawingBoundary?: boolean;
   onBoundaryDrawComplete?: () => void;
   onBoundaryDrawCancel?: () => void;
@@ -36,6 +38,8 @@ const MapContainer = ({
   zoom,
   clubId,
   onStandClick,
+  selectedStandForRings,
+  showDistanceRings = true,
   isDrawingBoundary = false,
   onBoundaryDrawComplete,
   onBoundaryDrawCancel,
@@ -452,6 +456,99 @@ const MapContainer = ({
       cameraMarkersRef.current.forEach(marker => marker.remove());
     };
   }, [map, isLoaded, cameras, camerasLoading]);
+
+  // Add distance rings around selected stand
+  useEffect(() => {
+    if (!map || !isLoaded || !showDistanceRings) return;
+
+    const RING_SOURCE_PREFIX = 'distance-ring';
+    const RING_LAYER_PREFIX = 'distance-ring-layer';
+
+    // Remove existing rings
+    [200, 300, 400].forEach(radius => {
+      const layerId = `${RING_LAYER_PREFIX}-${radius}`;
+      const sourceId = `${RING_SOURCE_PREFIX}-${radius}`;
+
+      if (map.getLayer(`${layerId}-outline`)) {
+        map.removeLayer(`${layerId}-outline`);
+      }
+      if (map.getLayer(layerId)) {
+        map.removeLayer(layerId);
+      }
+      if (map.getSource(sourceId)) {
+        map.removeSource(sourceId);
+      }
+    });
+
+    // If no stand selected, return after cleanup
+    if (!selectedStandForRings) return;
+
+    // Find the selected stand
+    const selectedStand = stands.find(s => s.id === selectedStandForRings);
+    if (!selectedStand) return;
+
+    // Distance rings: 200, 300, 400 yards
+    const ringDistances = [
+      { yards: 200, color: '#22c55e', opacity: 0.1 },
+      { yards: 300, color: '#e9c46a', opacity: 0.08 },
+      { yards: 400, color: '#ef4444', opacity: 0.06 },
+    ];
+
+    ringDistances.forEach(ring => {
+      const radiusInMeters = ring.yards * 0.9144;
+      const circleGeoJSON = createCircle([selectedStand.lng, selectedStand.lat], radiusInMeters);
+
+      const sourceId = `${RING_SOURCE_PREFIX}-${ring.yards}`;
+      const layerId = `${RING_LAYER_PREFIX}-${ring.yards}`;
+
+      map.addSource(sourceId, {
+        type: 'geojson',
+        data: circleGeoJSON,
+      });
+
+      // Fill layer
+      map.addLayer({
+        id: layerId,
+        type: 'fill',
+        source: sourceId,
+        paint: {
+          'fill-color': ring.color,
+          'fill-opacity': ring.opacity,
+        },
+      });
+
+      // Outline layer
+      map.addLayer({
+        id: `${layerId}-outline`,
+        type: 'line',
+        source: sourceId,
+        paint: {
+          'line-color': ring.color,
+          'line-width': 2,
+          'line-opacity': 0.6,
+          'line-dasharray': [3, 3],
+        },
+      });
+    });
+
+    // Cleanup on unmount or when selection changes
+    return () => {
+      [200, 300, 400].forEach(radius => {
+        const layerId = `${RING_LAYER_PREFIX}-${radius}`;
+        const sourceId = `${RING_SOURCE_PREFIX}-${radius}`;
+
+        if (map.getLayer(`${layerId}-outline`)) {
+          map.removeLayer(`${layerId}-outline`);
+        }
+        if (map.getLayer(layerId)) {
+          map.removeLayer(layerId);
+        }
+        if (map.getSource(sourceId)) {
+          map.removeSource(sourceId);
+        }
+      });
+    };
+  }, [map, isLoaded, selectedStandForRings, showDistanceRings, stands]);
 
   if (error) {
     return (

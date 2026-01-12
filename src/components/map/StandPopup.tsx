@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { User, Wind, Ruler, Info, X } from 'lucide-react';
+import { User, Wind, Ruler, Info, X, Target } from 'lucide-react';
 import type { Stand } from '../../types';
 import { getStatusColor, getTypeIcon, getStatusDisplayName, getTypeDisplayName } from '../../utils/standMarkerHelpers';
 
@@ -7,9 +7,11 @@ interface StandPopupProps {
   stand: Stand;
   onBook?: (stand: Stand) => void;
   onClose?: () => void;
+  onShowRange?: (stand: Stand) => void;
+  showingRange?: boolean;
 }
 
-const StandPopup = ({ stand, onBook, onClose }: StandPopupProps) => {
+const StandPopup = ({ stand, onBook, onClose, onShowRange, showingRange = false }: StandPopupProps) => {
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
@@ -87,16 +89,34 @@ const StandPopup = ({ stand, onBook, onClose }: StandPopupProps) => {
       </div>
 
       {/* Actions */}
-      {stand.status === 'available' && onBook && (
-        <motion.button
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-          onClick={() => onBook(stand)}
-          className="w-full py-2.5 rounded-lg bg-gradient-to-r from-green-600 to-green-700 hover:from-green-500 hover:to-green-600 text-white font-bold text-sm transition-all shadow-lg"
-        >
-          Book This Stand
-        </motion.button>
-      )}
+      <div className="space-y-2">
+        {onShowRange && (
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={() => onShowRange(stand)}
+            className={`w-full py-2.5 rounded-lg font-medium text-sm transition-all flex items-center justify-center gap-2 ${
+              showingRange
+                ? 'bg-blue-500/20 border-2 border-blue-500 text-blue-400'
+                : 'bg-white/5 border-2 border-white/10 text-gray-300 hover:bg-white/10'
+            }`}
+          >
+            <Target size={16} />
+            {showingRange ? 'Hide Range Rings' : 'Show Range Rings'}
+          </motion.button>
+        )}
+
+        {stand.status === 'available' && onBook && (
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={() => onBook(stand)}
+            className="w-full py-2.5 rounded-lg bg-gradient-to-r from-green-600 to-green-700 hover:from-green-500 hover:to-green-600 text-white font-bold text-sm transition-all shadow-lg"
+          >
+            Book This Stand
+          </motion.button>
+        )}
+      </div>
 
       {stand.status === 'reserved' && (
         <div className="text-center py-2 px-3 rounded-lg bg-amber-500/10 border border-amber-500/20">

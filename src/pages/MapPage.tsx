@@ -18,6 +18,7 @@ const MapPage = () => {
   const [isDrawingBoundary, setIsDrawingBoundary] = useState(false);
   const [isDrawingFoodPlot, setIsDrawingFoodPlot] = useState(false);
   const [isDrawingAccessRoute, setIsDrawingAccessRoute] = useState(false);
+  const [selectedStandForRings, setSelectedStandForRings] = useState<string | null>(null);
 
   const handleStandClick = useCallback((stand: Stand) => {
     setSelectedStand(stand);
@@ -82,6 +83,16 @@ const MapPage = () => {
   const handleAccessRouteDrawCancel = useCallback(() => {
     setIsDrawingAccessRoute(false);
   }, []);
+
+  const handleShowRange = useCallback((stand: Stand) => {
+    if (selectedStandForRings === stand.id) {
+      // Toggle off if clicking the same stand
+      setSelectedStandForRings(null);
+    } else {
+      // Show rings for this stand
+      setSelectedStandForRings(stand.id);
+    }
+  }, [selectedStandForRings]);
 
   // Check if user has permission to draw boundaries (owner or manager)
   const canDrawBoundaries = profile?.role === 'owner' || profile?.role === 'manager';
@@ -184,6 +195,8 @@ const MapPage = () => {
         <MapContainer
           clubId={profile?.clubId}
           onStandClick={handleStandClick}
+          selectedStandForRings={selectedStandForRings || undefined}
+          showDistanceRings={true}
           isDrawingBoundary={isDrawingBoundary}
           onBoundaryDrawComplete={handleBoundaryDrawComplete}
           onBoundaryDrawCancel={handleBoundaryDrawCancel}
@@ -221,6 +234,8 @@ const MapPage = () => {
               stand={selectedStand}
               onBook={handleBookStand}
               onClose={() => setSelectedStand(null)}
+              onShowRange={handleShowRange}
+              showingRange={selectedStandForRings === selectedStand.id}
             />
           </motion.div>
         </motion.div>
