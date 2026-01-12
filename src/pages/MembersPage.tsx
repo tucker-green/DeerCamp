@@ -6,7 +6,7 @@ import { useAuth } from '../context/AuthContext';
 import { useAllMembers } from '../hooks/useMembers';
 import MemberCard from '../components/MemberCard';
 import { searchMembers, getMemberStats, canInviteMembers, canEditMember, canPromoteUser } from '../utils/memberHelpers';
-import { UserRole, MemberStatus } from '../types';
+import type { UserRole, MemberStatus } from '../types';
 
 export default function MembersPage() {
     const navigate = useNavigate();

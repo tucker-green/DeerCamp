@@ -4,7 +4,7 @@ import { ArrowLeft, UserPlus, Copy, CheckCircle, Mail } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useInvites } from '../hooks/useInvites';
-import { UserRole, MembershipTier } from '../types';
+import type { UserRole, MembershipTier } from '../types';
 import { validateEmail } from '../utils/memberHelpers';
 
 export default function InviteMemberPage() {

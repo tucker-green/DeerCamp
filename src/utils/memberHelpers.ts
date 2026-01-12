@@ -1,4 +1,4 @@
-import { UserProfile, UserRole, MembershipTier, DuesStatus, MemberStatus } from '../types';
+import type { UserProfile, UserRole, MembershipTier, DuesStatus, MemberStatus } from '../types';
 
 // ==================== VALIDATION ====================
 

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { collection, query, where, onSnapshot, addDoc, updateDoc, deleteDoc, doc, getDocs, orderBy } from 'firebase/firestore';
 import { db } from '../firebase/config';
-import { Invite, InviteStatus, UserRole, MembershipTier } from '../types';
+import type { Invite, InviteStatus, UserRole, MembershipTier } from '../types';
 import { generateInviteCode, getInviteExpirationDate, isInviteExpired } from '../utils/memberHelpers';
 
 interface UseInvitesOptions {

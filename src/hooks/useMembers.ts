@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { collection, query, where, onSnapshot, doc, updateDoc, deleteDoc, getDocs, orderBy } from 'firebase/firestore';
 import { db } from '../firebase/config';
-import { UserProfile, UserRole, MemberStatus, DuesStatus, MembershipTier } from '../types';
+import type { UserProfile, UserRole, MemberStatus, DuesStatus, MembershipTier } from '../types';
 import { calculateProfileCompleteness } from '../utils/memberHelpers';
 
 interface UseMembersOptions {
@@ -45,10 +45,10 @@ export function useMembers(options: UseMembersOptions = {}) {
             const unsubscribe = onSnapshot(
                 q,
                 (snapshot) => {
-                    const memberData = snapshot.docs.map(docSnap => ({
-                        id: docSnap.id,
-                        ...docSnap.data()
-                    } as UserProfile));
+                    const memberData = snapshot.docs.map(docSnap => {
+                        const data = docSnap.data();
+                        return { ...data, uid: data.uid || docSnap.id } as UserProfile;
+                    });
 
                     setMembers(memberData);
                     setLoading(false);
@@ -87,7 +87,7 @@ export function useMembers(options: UseMembersOptions = {}) {
     const updateMemberStatus = async (
         userId: string,
         newStatus: MemberStatus
-    ): Promise<{ success: boolean; error?: string }> {
+    ): Promise<{ success: boolean; error?: string }> => {
         try {
             await updateDoc(doc(db, 'users', userId), {
                 membershipStatus: newStatus,
@@ -105,7 +105,7 @@ export function useMembers(options: UseMembersOptions = {}) {
     const updateMemberTier = async (
         userId: string,
         newTier: MembershipTier
-    ): Promise<{ success: boolean; error?: string }> {
+    ): Promise<{ success: boolean; error?: string }> => {
         try {
             await updateDoc(doc(db, 'users', userId), {
                 membershipTier: newTier,
@@ -127,7 +127,7 @@ export function useMembers(options: UseMembersOptions = {}) {
             duesPaidUntil?: string;
             lastDuesPayment?: string;
         }
-    ): Promise<{ success: boolean; error?: string }> {
+    ): Promise<{ success: boolean; error?: string }> => {
         try {
             await updateDoc(doc(db, 'users', userId), {
                 ...duesData,
@@ -145,7 +145,7 @@ export function useMembers(options: UseMembersOptions = {}) {
     const updateMemberProfile = async (
         userId: string,
         updates: Partial<UserProfile>
-    ): Promise<{ success: boolean; error?: string }> {
+    ): Promise<{ success: boolean; error?: string }> => {
         try {
             // Calculate profile completeness if updating profile fields
             const completeness = calculateProfileCompleteness({
@@ -228,10 +228,8 @@ export async function getMemberById(userId: string): Promise<UserProfile | null>
 
         if (snapshot.empty) return null;
 
-        return {
-            id: snapshot.docs[0].id,
-            ...snapshot.docs[0].data()
-        } as UserProfile;
+        const data = snapshot.docs[0].data();
+        return { ...data, uid: data.uid || snapshot.docs[0].id } as UserProfile;
     } catch (err: any) {
         console.error('Error fetching member:', err);
         return null;

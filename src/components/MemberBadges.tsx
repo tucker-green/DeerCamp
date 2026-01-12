@@ -1,4 +1,4 @@
-import { UserRole, MembershipTier, DuesStatus, MemberStatus } from '../types';
+import type { UserRole, MembershipTier, DuesStatus, MemberStatus } from '../types';
 import { getRoleBadge, getMembershipBadge, getDuesStatusBadge, getMemberStatusBadge } from '../utils/memberHelpers';
 
 interface RoleBadgeProps {
