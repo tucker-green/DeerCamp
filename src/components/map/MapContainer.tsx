@@ -13,6 +13,7 @@ import { boundaryToGeoJSON, foodPlotToGeoJSON, routeToGeoJSON, createCircle } fr
 import PropertyBoundaryDrawer from './PropertyBoundaryDrawer';
 import FoodPlotDrawer from './FoodPlotDrawer';
 import AccessRouteDrawer from './AccessRouteDrawer';
+import MeasureTool from './MeasureTool';
 import type { Stand } from '../../types';
 import type { LayerVisibility } from './LayerControls';
 
@@ -33,6 +34,8 @@ interface MapContainerProps {
   isDrawingAccessRoute?: boolean;
   onAccessRouteDrawComplete?: () => void;
   onAccessRouteDrawCancel?: () => void;
+  isMeasuring?: boolean;
+  onMeasureClose?: () => void;
 }
 
 const MapContainer = ({
@@ -60,6 +63,8 @@ const MapContainer = ({
   isDrawingAccessRoute = false,
   onAccessRouteDrawComplete,
   onAccessRouteDrawCancel,
+  isMeasuring = false,
+  onMeasureClose,
 }: MapContainerProps) => {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const { map, isLoaded, error } = useMapbox(mapContainerRef, { center, zoom });
@@ -638,6 +643,15 @@ const MapContainer = ({
           isDrawing={isDrawingAccessRoute}
           onDrawingComplete={onAccessRouteDrawComplete}
           onCancel={onAccessRouteDrawCancel}
+        />
+      )}
+
+      {/* Measure Tool */}
+      {map && isMeasuring && onMeasureClose && (
+        <MeasureTool
+          map={map}
+          isActive={isMeasuring}
+          onClose={onMeasureClose}
         />
       )}
     </div>

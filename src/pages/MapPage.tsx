@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Map as MapIcon, Filter, Pencil, Sprout, Route, Layers } from 'lucide-react';
+import { Map as MapIcon, Filter, Pencil, Sprout, Route, Layers, Ruler } from 'lucide-react';
 import MapContainer from '../components/map/MapContainer';
 import StandPopup from '../components/map/StandPopup';
 import StandFilter from '../components/map/StandFilter';
@@ -20,6 +20,7 @@ const MapPage = () => {
   const [isDrawingBoundary, setIsDrawingBoundary] = useState(false);
   const [isDrawingFoodPlot, setIsDrawingFoodPlot] = useState(false);
   const [isDrawingAccessRoute, setIsDrawingAccessRoute] = useState(false);
+  const [isMeasuring, setIsMeasuring] = useState(false);
   const [selectedStandForRings, setSelectedStandForRings] = useState<string | null>(null);
   const [layerVisibility, setLayerVisibility] = useState<LayerVisibility>({
     stands: true,
@@ -109,9 +110,24 @@ const MapPage = () => {
     setLayerVisibility(prev => ({ ...prev, [layer]: visible }));
   }, []);
 
+  const handleStartMeasuring = useCallback(() => {
+    setIsMeasuring(true);
+    setIsDrawingBoundary(false);
+    setIsDrawingFoodPlot(false);
+    setIsDrawingAccessRoute(false);
+    setShowFilters(false);
+    setShowLayerControls(false);
+    setSelectedStand(null);
+  }, []);
+
+  const handleMeasureClose = useCallback(() => {
+    setIsMeasuring(false);
+  }, []);
+
   // Check if user has permission to draw boundaries (owner or manager)
   const canDrawBoundaries = profile?.role === 'owner' || profile?.role === 'manager';
   const isDrawing = isDrawingBoundary || isDrawingFoodPlot || isDrawingAccessRoute;
+  const isToolActive = isDrawing || isMeasuring;
 
   return (
     <div className="h-screen flex flex-col pt-6 pb-20">
@@ -187,13 +203,29 @@ const MapPage = () => {
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
+            onClick={handleStartMeasuring}
+            disabled={isToolActive && !isMeasuring}
+            className={`glass-panel-strong p-3 rounded-xl border transition-all ${
+              isMeasuring
+                ? 'border-blue-500/30 bg-blue-500/10'
+                : isToolActive
+                ? 'opacity-50 cursor-not-allowed border-white/10'
+                : 'border-white/10 hover:border-blue-500/30 hover:bg-blue-500/10'
+            }`}
+            title="Measure distance"
+          >
+            <Ruler size={20} className={isMeasuring ? 'text-blue-400' : 'text-gray-300'} />
+          </motion.button>
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
             onClick={() => setShowFilters(!showFilters)}
-            disabled={isDrawing}
+            disabled={isToolActive}
             className={`glass-panel-strong p-3 rounded-xl border transition-all ${
               showFilters
                 ? 'border-green-500/30 bg-green-500/10'
                 : 'border-white/10 hover:border-white/20'
-            } ${isDrawing ? 'opacity-50 cursor-not-allowed' : ''}`}
+            } ${isToolActive ? 'opacity-50 cursor-not-allowed' : ''}`}
           >
             <Filter size={20} className={showFilters ? 'text-green-400' : 'text-gray-300'} />
           </motion.button>
@@ -201,12 +233,12 @@ const MapPage = () => {
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={() => setShowLayerControls(!showLayerControls)}
-            disabled={isDrawing}
+            disabled={isToolActive}
             className={`glass-panel-strong p-3 rounded-xl border transition-all ${
               showLayerControls
                 ? 'border-blue-500/30 bg-blue-500/10'
                 : 'border-white/10 hover:border-white/20'
-            } ${isDrawing ? 'opacity-50 cursor-not-allowed' : ''}`}
+            } ${isToolActive ? 'opacity-50 cursor-not-allowed' : ''}`}
           >
             <Layers size={20} className={showLayerControls ? 'text-blue-400' : 'text-gray-300'} />
           </motion.button>
@@ -235,6 +267,8 @@ const MapPage = () => {
           isDrawingAccessRoute={isDrawingAccessRoute}
           onAccessRouteDrawComplete={handleAccessRouteDrawComplete}
           onAccessRouteDrawCancel={handleAccessRouteDrawCancel}
+          isMeasuring={isMeasuring}
+          onMeasureClose={handleMeasureClose}
         />
       </motion.div>
 
