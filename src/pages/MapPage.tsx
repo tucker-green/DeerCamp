@@ -1,10 +1,11 @@
 import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Map as MapIcon, Filter, Pencil, Sprout, Route } from 'lucide-react';
+import { Map as MapIcon, Filter, Pencil, Sprout, Route, Layers } from 'lucide-react';
 import MapContainer from '../components/map/MapContainer';
 import StandPopup from '../components/map/StandPopup';
 import StandFilter from '../components/map/StandFilter';
+import LayerControls, { LayerVisibility } from '../components/map/LayerControls';
 import { useAuth } from '../context/AuthContext';
 import type { Stand } from '../types';
 import type { StandFilters } from '../components/map/StandFilter';
@@ -14,11 +15,21 @@ const MapPage = () => {
   const { profile } = useAuth();
   const [selectedStand, setSelectedStand] = useState<Stand | null>(null);
   const [showFilters, setShowFilters] = useState(false);
+  const [showLayerControls, setShowLayerControls] = useState(false);
   const [filters, setFilters] = useState<StandFilters>({ types: [], statuses: [] });
   const [isDrawingBoundary, setIsDrawingBoundary] = useState(false);
   const [isDrawingFoodPlot, setIsDrawingFoodPlot] = useState(false);
   const [isDrawingAccessRoute, setIsDrawingAccessRoute] = useState(false);
   const [selectedStandForRings, setSelectedStandForRings] = useState<string | null>(null);
+  const [layerVisibility, setLayerVisibility] = useState<LayerVisibility>({
+    stands: true,
+    propertyBoundaries: true,
+    foodPlots: true,
+    accessRoutes: true,
+    terrainFeatures: true,
+    trailCameras: true,
+    distanceRings: true,
+  });
 
   const handleStandClick = useCallback((stand: Stand) => {
     setSelectedStand(stand);
@@ -93,6 +104,10 @@ const MapPage = () => {
       setSelectedStandForRings(stand.id);
     }
   }, [selectedStandForRings]);
+
+  const handleLayerVisibilityChange = useCallback((layer: keyof LayerVisibility, visible: boolean) => {
+    setLayerVisibility(prev => ({ ...prev, [layer]: visible }));
+  }, []);
 
   // Check if user has permission to draw boundaries (owner or manager)
   const canDrawBoundaries = profile?.role === 'owner' || profile?.role === 'manager';
@@ -182,6 +197,19 @@ const MapPage = () => {
           >
             <Filter size={20} className={showFilters ? 'text-green-400' : 'text-gray-300'} />
           </motion.button>
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => setShowLayerControls(!showLayerControls)}
+            disabled={isDrawing}
+            className={`glass-panel-strong p-3 rounded-xl border transition-all ${
+              showLayerControls
+                ? 'border-blue-500/30 bg-blue-500/10'
+                : 'border-white/10 hover:border-white/20'
+            } ${isDrawing ? 'opacity-50 cursor-not-allowed' : ''}`}
+          >
+            <Layers size={20} className={showLayerControls ? 'text-blue-400' : 'text-gray-300'} />
+          </motion.button>
         </div>
       </motion.div>
 
@@ -197,6 +225,7 @@ const MapPage = () => {
           onStandClick={handleStandClick}
           selectedStandForRings={selectedStandForRings || undefined}
           showDistanceRings={true}
+          layerVisibility={layerVisibility}
           isDrawingBoundary={isDrawingBoundary}
           onBoundaryDrawComplete={handleBoundaryDrawComplete}
           onBoundaryDrawCancel={handleBoundaryDrawCancel}
@@ -214,6 +243,14 @@ const MapPage = () => {
         isOpen={showFilters}
         onClose={() => setShowFilters(false)}
         onFilterChange={handleFilterChange}
+      />
+
+      {/* Layer Controls Panel */}
+      <LayerControls
+        isOpen={showLayerControls}
+        onClose={() => setShowLayerControls(false)}
+        visibility={layerVisibility}
+        onVisibilityChange={handleLayerVisibilityChange}
       />
 
       {/* Stand Popup Overlay */}

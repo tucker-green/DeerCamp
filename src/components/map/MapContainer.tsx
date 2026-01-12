@@ -14,6 +14,7 @@ import PropertyBoundaryDrawer from './PropertyBoundaryDrawer';
 import FoodPlotDrawer from './FoodPlotDrawer';
 import AccessRouteDrawer from './AccessRouteDrawer';
 import type { Stand } from '../../types';
+import type { LayerVisibility } from './LayerControls';
 
 interface MapContainerProps {
   center?: [number, number];
@@ -22,6 +23,7 @@ interface MapContainerProps {
   onStandClick?: (stand: Stand) => void;
   selectedStandForRings?: string; // Stand ID to show distance rings around
   showDistanceRings?: boolean;
+  layerVisibility?: LayerVisibility;
   isDrawingBoundary?: boolean;
   onBoundaryDrawComplete?: () => void;
   onBoundaryDrawCancel?: () => void;
@@ -40,6 +42,15 @@ const MapContainer = ({
   onStandClick,
   selectedStandForRings,
   showDistanceRings = true,
+  layerVisibility = {
+    stands: true,
+    propertyBoundaries: true,
+    foodPlots: true,
+    accessRoutes: true,
+    terrainFeatures: true,
+    trailCameras: true,
+    distanceRings: true,
+  },
   isDrawingBoundary = false,
   onBoundaryDrawComplete,
   onBoundaryDrawCancel,
@@ -69,6 +80,9 @@ const MapContainer = ({
     // Remove old markers
     markersRef.current.forEach(marker => marker.remove());
     markersRef.current.clear();
+
+    // Early return if stands layer is hidden
+    if (!layerVisibility.stands) return;
 
     // Add new markers for each stand
     stands.forEach(stand => {
@@ -100,7 +114,7 @@ const MapContainer = ({
     return () => {
       markersRef.current.forEach(marker => marker.remove());
     };
-  }, [map, isLoaded, stands, standsLoading, onStandClick]);
+  }, [map, isLoaded, stands, standsLoading, onStandClick, layerVisibility.stands]);
 
   // Add property boundaries to the map
   useEffect(() => {
@@ -120,6 +134,9 @@ const MapContainer = ({
     if (map.getSource(BOUNDARY_SOURCE_ID)) {
       map.removeSource(BOUNDARY_SOURCE_ID);
     }
+
+    // Early return if property boundaries layer is hidden
+    if (!layerVisibility.propertyBoundaries) return;
 
     // Add source with boundary features
     const geojsonFeatures = boundaries.map(boundaryToGeoJSON);
@@ -165,7 +182,7 @@ const MapContainer = ({
         map.removeSource(BOUNDARY_SOURCE_ID);
       }
     };
-  }, [map, isLoaded, boundaries, boundariesLoading]);
+  }, [map, isLoaded, boundaries, boundariesLoading, layerVisibility.propertyBoundaries]);
 
   // Add food plots to the map
   useEffect(() => {
@@ -185,6 +202,9 @@ const MapContainer = ({
     if (map.getSource(FOOD_PLOT_SOURCE_ID)) {
       map.removeSource(FOOD_PLOT_SOURCE_ID);
     }
+
+    // Early return if food plots layer is hidden
+    if (!layerVisibility.foodPlots) return;
 
     // Add source with food plot features
     const geojsonFeatures = foodPlots.map(foodPlotToGeoJSON);
@@ -230,7 +250,7 @@ const MapContainer = ({
         map.removeSource(FOOD_PLOT_SOURCE_ID);
       }
     };
-  }, [map, isLoaded, foodPlots, foodPlotsLoading]);
+  }, [map, isLoaded, foodPlots, foodPlotsLoading, layerVisibility.foodPlots]);
 
   // Add access routes to the map
   useEffect(() => {
@@ -246,6 +266,9 @@ const MapContainer = ({
     if (map.getSource(ROUTE_SOURCE_ID)) {
       map.removeSource(ROUTE_SOURCE_ID);
     }
+
+    // Early return if access routes layer is hidden
+    if (!layerVisibility.accessRoutes) return;
 
     // Add source with route features
     const geojsonFeatures = routes.map(routeToGeoJSON);
@@ -298,7 +321,7 @@ const MapContainer = ({
         map.removeSource(ROUTE_SOURCE_ID);
       }
     };
-  }, [map, isLoaded, routes, routesLoading]);
+  }, [map, isLoaded, routes, routesLoading, layerVisibility.accessRoutes]);
 
   // Add terrain feature markers to the map
   useEffect(() => {
@@ -307,6 +330,9 @@ const MapContainer = ({
     // Remove old markers
     featureMarkersRef.current.forEach(marker => marker.remove());
     featureMarkersRef.current.clear();
+
+    // Early return if terrain features layer is hidden
+    if (!layerVisibility.terrainFeatures) return;
 
     // Add new markers for each terrain feature
     features.forEach(feature => {
@@ -388,7 +414,7 @@ const MapContainer = ({
         }
       });
     };
-  }, [map, isLoaded, features, featuresLoading]);
+  }, [map, isLoaded, features, featuresLoading, layerVisibility.terrainFeatures]);
 
   // Add trail camera markers to the map
   useEffect(() => {
@@ -397,6 +423,9 @@ const MapContainer = ({
     // Remove old markers
     cameraMarkersRef.current.forEach(marker => marker.remove());
     cameraMarkersRef.current.clear();
+
+    // Early return if trail cameras layer is hidden
+    if (!layerVisibility.trailCameras) return;
 
     // Add new markers for each camera
     cameras.forEach(camera => {
@@ -455,11 +484,14 @@ const MapContainer = ({
     return () => {
       cameraMarkersRef.current.forEach(marker => marker.remove());
     };
-  }, [map, isLoaded, cameras, camerasLoading]);
+  }, [map, isLoaded, cameras, camerasLoading, layerVisibility.trailCameras]);
 
   // Add distance rings around selected stand
   useEffect(() => {
     if (!map || !isLoaded || !showDistanceRings) return;
+
+    // Early return if distance rings layer is hidden
+    if (!layerVisibility.distanceRings) return;
 
     const RING_SOURCE_PREFIX = 'distance-ring';
     const RING_LAYER_PREFIX = 'distance-ring-layer';
@@ -548,7 +580,7 @@ const MapContainer = ({
         }
       });
     };
-  }, [map, isLoaded, selectedStandForRings, showDistanceRings, stands]);
+  }, [map, isLoaded, selectedStandForRings, showDistanceRings, stands, layerVisibility.distanceRings]);
 
   if (error) {
     return (
