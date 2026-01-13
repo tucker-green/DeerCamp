@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { collection, query, where, onSnapshot, addDoc, updateDoc, deleteDoc, doc, getDocs, orderBy, arrayUnion, getDoc } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, addDoc, setDoc, updateDoc, deleteDoc, doc, getDocs, orderBy, arrayUnion, getDoc } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import { useAuth } from '../context/AuthContext';
 import type { Invite, InviteStatus, UserRole, MembershipTier } from '../types';
@@ -198,7 +198,9 @@ export function useInvites(options: UseInvitesOptions = {}) {
             const userProfile = userDoc.exists() ? userDoc.data() : null;
 
             // Create ClubMembership record
-            await addDoc(collection(db, 'clubMemberships'), {
+            // CRITICAL: ID must be {clubId}_{userId} to match security rules
+            const membershipId = `${invite.clubId}_${userId}`;
+            await setDoc(doc(db, 'clubMemberships', membershipId), {
                 userId,
                 clubId: invite.clubId,
                 role: invite.role,

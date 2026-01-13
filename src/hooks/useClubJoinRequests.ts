@@ -5,6 +5,7 @@ import {
     where,
     onSnapshot,
     addDoc,
+    setDoc,
     updateDoc,
     deleteDoc,
     doc,
@@ -191,7 +192,9 @@ export function useClubJoinRequests(options: UseClubJoinRequestsOptions = {}) {
             });
 
             // Create ClubMembership
-            await addDoc(collection(db, 'clubMemberships'), {
+            // CRITICAL: ID must be {clubId}_{userId} to match security rules
+            const membershipId = `${request.clubId}_${request.userId}`;
+            await setDoc(doc(db, 'clubMemberships', membershipId), {
                 userId: request.userId,
                 clubId: request.clubId,
                 role: 'member',
