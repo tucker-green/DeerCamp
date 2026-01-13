@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { Trophy, TrendingUp, Award } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { getClubRecords, getHarvestStats, type ClubRecord } from '../utils/trophyRecords';
+import NoClubSelected from '../components/NoClubSelected';
 
 export default function TrophyBookPage() {
   const { activeClubId } = useAuth();
@@ -39,6 +40,11 @@ export default function TrophyBookPage() {
 
   const currentYear = new Date().getFullYear();
   const seasons = ['all', currentYear.toString(), (currentYear - 1).toString(), (currentYear - 2).toString()];
+
+  // Show empty state if no club selected
+  if (!activeClubId) {
+    return <NoClubSelected title="No Club Selected" message="Select or join a club to view trophy records and club leaderboards." />;
+  }
 
   if (loading) {
     return (

@@ -7,6 +7,7 @@ import { useAllMembers } from '../hooks/useMembers';
 import MemberCard from '../components/MemberCard';
 import { searchMembers, getMemberStats, canInviteMembers, canEditMemberProfile, canPromoteMember } from '../utils/memberHelpers';
 import type { UserRole, MemberStatus, ClubMembership } from '../types';
+import NoClubSelected from '../components/NoClubSelected';
 
 export default function MembersPage() {
     const navigate = useNavigate();
@@ -15,8 +16,13 @@ export default function MembersPage() {
     const [roleFilter, setRoleFilter] = useState<UserRole | 'all'>('all');
     const [statusFilter, setStatusFilter] = useState<MemberStatus | 'all'>('all');
 
+    // Show empty state if no club selected
+    if (!activeClubId) {
+        return <NoClubSelected title="No Club Selected" message="Select or join a club to view and manage members." />;
+    }
+
     // Fetch members
-    const { members, loading, error } = useAllMembers(activeClubId || '');
+    const { members, loading, error } = useAllMembers(activeClubId);
 
     // Filter members
     let filteredMembers = members;

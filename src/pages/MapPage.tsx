@@ -10,6 +10,7 @@ import type { LayerVisibility } from '../components/map/LayerControls';
 import { useAuth } from '../context/AuthContext';
 import type { Stand } from '../types';
 import type { StandFilters } from '../components/map/StandFilter';
+import NoClubSelected from '../components/NoClubSelected';
 
 const MapPage = () => {
   const navigate = useNavigate();
@@ -126,6 +127,11 @@ const MapPage = () => {
   const canDrawBoundaries = activeMembership?.role === 'owner' || activeMembership?.role === 'manager';
   const isDrawing = isDrawingBoundary || isDrawingFoodPlot || isDrawingAccessRoute;
   const isToolActive = isDrawing || isMeasuring;
+
+  // Show empty state if no club selected
+  if (!activeClubId) {
+    return <NoClubSelected title="No Club Selected" message="Select or join a club to view your property map and hunting stands." />;
+  }
 
   return (
     <div className="h-screen flex flex-col pt-6 pb-20">

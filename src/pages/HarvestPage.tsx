@@ -1,14 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { db, storage } from '../firebase/config';
-import { collection, addDoc, query, orderBy, onSnapshot } from 'firebase/firestore';
+import { collection, addDoc, query, where, orderBy, onSnapshot } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import type { Harvest } from '../types';
 import { useAuth } from '../context/AuthContext';
 import { Plus, Camera, Tag, X, Calendar, Scale, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import NoClubSelected from '../components/NoClubSelected';
 
 const HarvestPage = () => {
-    const { profile, user } = useAuth();
+    const { profile, user, activeClubId } = useAuth();
     const [harvests, setHarvests] = useState<Harvest[]>([]);
     const [showAddModal, setShowAddModal] = useState(false);
     const [loading, setLoading] = useState(false);
@@ -23,9 +24,14 @@ const HarvestPage = () => {
     });
 
     useEffect(() => {
-        if (!user) return;
+        if (!user || !activeClubId) {
+            setHarvests([]);
+            return;
+        }
+
         const q = query(
             collection(db, 'harvests'),
+            where('clubId', '==', activeClubId),
             orderBy('date', 'desc')
         );
 
@@ -35,7 +41,7 @@ const HarvestPage = () => {
         });
 
         return unsubscribe;
-    }, [user]);
+    }, [user, activeClubId]);
 
     const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
@@ -45,7 +51,7 @@ const HarvestPage = () => {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!user) return;
+        if (!user || !activeClubId) return;
         setLoading(true);
 
         try {
@@ -57,6 +63,7 @@ const HarvestPage = () => {
             }
 
             await addDoc(collection(db, 'harvests'), {
+                clubId: activeClubId,
                 userId: user.uid,
                 userName: profile?.displayName || 'Hunter',
                 date: new Date().toISOString(),
@@ -77,6 +84,11 @@ const HarvestPage = () => {
             setLoading(false);
         }
     };
+
+    // Show empty state if no club selected
+    if (!activeClubId) {
+        return <NoClubSelected title="No Club Selected" message="Select or join a club to log and view harvests." />;
+    }
 
     return (
         <div className="space-y-8 pt-6 pb-20">

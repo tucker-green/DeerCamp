@@ -1,16 +1,17 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { collection, getDocs } from 'firebase/firestore';
+import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import type { Stand } from '../types';
 import { useBookingsByDate } from '../hooks/useBookings';
 import { formatBookingDate, getSunTimes } from '../utils/bookingHelpers';
 import { Calendar, Plus, ChevronLeft, ChevronRight, Sun, Moon } from 'lucide-react';
 import { motion } from 'framer-motion';
+import NoClubSelected from '../components/NoClubSelected';
 
 const BookingsPage = () => {
-  const { user } = useAuth();
+  const { user, activeClubId } = useAuth();
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [stands, setStands] = useState<Stand[]>([]);
   const [loading, setLoading] = useState(true);
@@ -20,8 +21,18 @@ const BookingsPage = () => {
   // Fetch stands
   useEffect(() => {
     const fetchStands = async () => {
+      if (!activeClubId) {
+        setStands([]);
+        setLoading(false);
+        return;
+      }
+
       try {
-        const snapshot = await getDocs(collection(db, 'stands'));
+        const q = query(
+          collection(db, 'stands'),
+          where('clubId', '==', activeClubId)
+        );
+        const snapshot = await getDocs(q);
         const standData = snapshot.docs.map(doc => ({
           id: doc.id,
           ...doc.data()
@@ -35,7 +46,7 @@ const BookingsPage = () => {
     };
 
     fetchStands();
-  }, []);
+  }, [activeClubId]);
 
   // Get booking for a specific stand and time slot
   const getBookingForStand = (standId: string, timeSlot: 'morning' | 'evening') => {
@@ -68,6 +79,11 @@ const BookingsPage = () => {
   };
 
   const sunTimes = getSunTimes(selectedDate);
+
+  // Show empty state if no club selected
+  if (!activeClubId) {
+    return <NoClubSelected title="No Club Selected" message="Select or join a club to view and create bookings." />;
+  }
 
   if (loading) {
     return (

@@ -1,22 +1,33 @@
 import { useState, useEffect } from 'react';
 import { db } from '../firebase/config';
-import { collection, query, onSnapshot, doc, updateDoc } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, doc, updateDoc } from 'firebase/firestore';
 import type { Stand } from '../types';
 import { Map as MapIcon, CheckCircle, Clock } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useAuth } from '../context/AuthContext';
+import NoClubSelected from '../components/NoClubSelected';
 
 const StandsPage = () => {
+    const { activeClubId } = useAuth();
     const [stands, setStands] = useState<Stand[]>([]);
     const [, setSelectedStand] = useState<Stand | null>(null);
 
     useEffect(() => {
-        const q = query(collection(db, 'stands'));
+        if (!activeClubId) {
+            setStands([]);
+            return;
+        }
+
+        const q = query(
+            collection(db, 'stands'),
+            where('clubId', '==', activeClubId)
+        );
         const unsubscribe = onSnapshot(q, (snapshot) => {
             const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Stand));
             setStands(data);
         });
         return unsubscribe;
-    }, []);
+    }, [activeClubId]);
 
     const toggleStatus = async (standId: string, currentStatus: string) => {
         const nextStatus = currentStatus === 'available' ? 'reserved' : 'available';
@@ -26,6 +37,11 @@ const StandsPage = () => {
             console.error(err);
         }
     };
+
+    // Show empty state if no club selected
+    if (!activeClubId) {
+        return <NoClubSelected title="No Club Selected" message="Select or join a club to view and manage hunting stands." />;
+    }
 
     return (
         <div className="space-y-8 pt-6 pb-20">
