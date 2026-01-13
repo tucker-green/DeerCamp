@@ -57,7 +57,6 @@ export function useMapbox(
 
       mapInstance.on('load', () => {
         setIsLoaded(true);
-        console.log('🗺️ Mapbox loaded successfully');
       });
 
       mapInstance.on('error', (e) => {

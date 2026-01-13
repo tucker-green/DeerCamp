@@ -1,4 +1,4 @@
-import type { UserProfile, UserRole, MembershipTier, DuesStatus, MemberStatus } from '../types';
+import type { UserProfile, UserRole, MembershipTier, DuesStatus, MemberStatus, ClubMembership } from '../types';
 
 // ==================== VALIDATION ====================
 
@@ -31,46 +31,48 @@ export function validatePhone(phone: string): boolean {
 
 // ==================== PERMISSIONS ====================
 
-export function canPromoteUser(member: UserProfile, currentUserRole: UserRole): boolean {
+// ===== NEW: Multi-Club Membership-Based Helpers =====
+
+export function canPromoteMember(membership: ClubMembership, currentUserRole: UserRole): boolean {
     // Only owners can promote users
     if (currentUserRole !== 'owner') return false;
 
     // Can't promote owners (already at top)
-    if (member.role === 'owner') return false;
+    if (membership.role === 'owner') return false;
 
     return true;
 }
 
-export function canDemoteUser(member: UserProfile, currentUserRole: UserRole): boolean {
+export function canDemoteMember(membership: ClubMembership, currentUserRole: UserRole): boolean {
     // Only owners can demote users
     if (currentUserRole !== 'owner') return false;
 
     // Can't demote other owners
-    if (member.role === 'owner') return false;
+    if (membership.role === 'owner') return false;
 
     return true;
 }
 
-export function canSuspendUser(member: UserProfile, currentUserRole: UserRole): boolean {
+export function canSuspendMember(membership: ClubMembership, currentUserRole: UserRole): boolean {
     // Owners and managers can suspend
     if (currentUserRole !== 'owner' && currentUserRole !== 'manager') return false;
 
     // Can't suspend owners
-    if (member.role === 'owner') return false;
+    if (membership.role === 'owner') return false;
 
     // Already suspended
-    if (member.membershipStatus === 'suspended') return false;
+    if (membership.membershipStatus === 'suspended') return false;
 
     return true;
 }
 
-export function canEditMember(
-    member: UserProfile,
+export function canEditMemberProfile(
+    userId: string,
     currentUserId: string,
     currentUserRole: UserRole
 ): boolean {
     // Can edit own profile
-    if (member.uid === currentUserId) return true;
+    if (userId === currentUserId) return true;
 
     // Owners and managers can edit members
     if (currentUserRole === 'owner' || currentUserRole === 'manager') return true;
@@ -78,18 +80,62 @@ export function canEditMember(
     return false;
 }
 
-export function canDeleteMember(member: UserProfile, currentUserRole: UserRole): boolean {
-    // Only owners can delete members
+export function canRemoveMember(membership: ClubMembership, currentUserRole: UserRole): boolean {
+    // Only owners can remove members
     if (currentUserRole !== 'owner') return false;
 
-    // Can't delete owners
-    if (member.role === 'owner') return false;
+    // Can't remove owners
+    if (membership.role === 'owner') return false;
 
     return true;
 }
 
 export function canInviteMembers(currentUserRole: UserRole): boolean {
     return currentUserRole === 'owner' || currentUserRole === 'manager';
+}
+
+// ===== DEPRECATED: Legacy UserProfile-Based Helpers =====
+// These are kept for backward compatibility during migration
+// Use the ClubMembership-based versions above for new code
+
+/** @deprecated Use canPromoteMember(membership, currentUserRole) instead */
+export function canPromoteUser(member: UserProfile, currentUserRole: UserRole): boolean {
+    if (currentUserRole !== 'owner') return false;
+    if (member.role === 'owner') return false;
+    return true;
+}
+
+/** @deprecated Use canDemoteMember(membership, currentUserRole) instead */
+export function canDemoteUser(member: UserProfile, currentUserRole: UserRole): boolean {
+    if (currentUserRole !== 'owner') return false;
+    if (member.role === 'owner') return false;
+    return true;
+}
+
+/** @deprecated Use canSuspendMember(membership, currentUserRole) instead */
+export function canSuspendUser(member: UserProfile, currentUserRole: UserRole): boolean {
+    if (currentUserRole !== 'owner' && currentUserRole !== 'manager') return false;
+    if (member.role === 'owner') return false;
+    if (member.membershipStatus === 'suspended') return false;
+    return true;
+}
+
+/** @deprecated Use canEditMemberProfile(userId, currentUserId, currentUserRole) instead */
+export function canEditMember(
+    member: UserProfile,
+    currentUserId: string,
+    currentUserRole: UserRole
+): boolean {
+    if (member.uid === currentUserId) return true;
+    if (currentUserRole === 'owner' || currentUserRole === 'manager') return true;
+    return false;
+}
+
+/** @deprecated Use canRemoveMember(membership, currentUserRole) instead */
+export function canDeleteMember(member: UserProfile, currentUserRole: UserRole): boolean {
+    if (currentUserRole !== 'owner') return false;
+    if (member.role === 'owner') return false;
+    return true;
 }
 
 // ==================== FORMATTING ====================

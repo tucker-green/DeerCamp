@@ -46,7 +46,6 @@ const MapPage = () => {
     setFilters(newFilters);
     // Filter implementation would go here
     // For MVP, we're just storing the filters
-    console.log('Filters updated:', newFilters);
   }, []);
 
   const handleStartDrawingBoundary = useCallback(() => {

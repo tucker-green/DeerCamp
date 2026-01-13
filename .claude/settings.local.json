@@ -17,7 +17,9 @@
       "Bash(npm run build:*)",
       "Bash(timeout:*)",
       "Bash(npm install:*)",
-      "Bash(if not exist \"src\\\\config\" mkdir \"src\\\\config\")"
+      "Bash(if not exist \"src\\\\config\" mkdir \"src\\\\config\")",
+      "Bash(git push:*)",
+      "Bash(grep:*)"
     ]
   }
 }

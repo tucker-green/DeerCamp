@@ -40,15 +40,11 @@ const LoginPage = () => {
     const handleGoogleSignIn = async () => {
         setError('');
         try {
-            console.log('🔍 Starting Google Sign-In...');
-
             // Set persistence to keep user logged in across browser sessions
             await setPersistence(auth, browserLocalPersistence);
 
             const provider = new GoogleAuthProvider();
-            console.log('✅ Provider created');
             const result = await signInWithPopup(auth, provider);
-            console.log('✅ Sign-in successful:', result.user.email);
             navigate('/');
         } catch (err: any) {
             console.error('❌ Google Sign-In Error:', err);

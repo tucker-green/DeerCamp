@@ -9,7 +9,7 @@ import ClubSwitcher from './ClubSwitcher';
 const Navbar = () => {
     const navigate = useNavigate();
     const location = useLocation();
-    const { profile } = useAuth();
+    const { profile, activeMembership } = useAuth();
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
     const handleLogout = () => {
@@ -28,7 +28,7 @@ const Navbar = () => {
     ];
 
     // Add Property Management link for owners and managers
-    const navItems = profile?.role === 'owner' || profile?.role === 'manager'
+    const navItems = activeMembership?.role === 'owner' || activeMembership?.role === 'manager'
         ? [...baseNavItems, { icon: <Settings size={16} />, label: 'Property Mgmt', path: '/property-management' }]
         : baseNavItems;
 
