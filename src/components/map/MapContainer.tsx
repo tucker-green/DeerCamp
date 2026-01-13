@@ -177,6 +177,7 @@ const MapContainer = ({
 
     // Cleanup on unmount
     return () => {
+      if (!map || !map.getStyle()) return;
       if (map.getLayer(BOUNDARY_LAYER_FILL_ID)) {
         map.removeLayer(BOUNDARY_LAYER_FILL_ID);
       }
@@ -245,6 +246,7 @@ const MapContainer = ({
 
     // Cleanup on unmount
     return () => {
+      if (!map || !map.getStyle()) return;
       if (map.getLayer(FOOD_PLOT_LAYER_FILL_ID)) {
         map.removeLayer(FOOD_PLOT_LAYER_FILL_ID);
       }
@@ -319,6 +321,7 @@ const MapContainer = ({
 
     // Cleanup on unmount
     return () => {
+      if (!map || !map.getStyle()) return;
       if (map.getLayer(ROUTE_LAYER_ID)) {
         map.removeLayer(ROUTE_LAYER_ID);
       }
@@ -402,22 +405,24 @@ const MapContainer = ({
       featureMarkersRef.current.forEach(marker => marker.remove());
 
       // Cleanup circles
-      features.forEach(feature => {
-        if (feature.radius) {
-          const CIRCLE_LAYER_ID = `terrain-feature-circle-layer-${feature.id}`;
-          const CIRCLE_SOURCE_ID = `terrain-feature-circle-${feature.id}`;
+      if (map && map.getStyle()) {
+        features.forEach(feature => {
+          if (feature.radius) {
+            const CIRCLE_LAYER_ID = `terrain-feature-circle-layer-${feature.id}`;
+            const CIRCLE_SOURCE_ID = `terrain-feature-circle-${feature.id}`;
 
-          if (map.getLayer(`${CIRCLE_LAYER_ID}-outline`)) {
-            map.removeLayer(`${CIRCLE_LAYER_ID}-outline`);
+            if (map.getLayer(`${CIRCLE_LAYER_ID}-outline`)) {
+              map.removeLayer(`${CIRCLE_LAYER_ID}-outline`);
+            }
+            if (map.getLayer(CIRCLE_LAYER_ID)) {
+              map.removeLayer(CIRCLE_LAYER_ID);
+            }
+            if (map.getSource(CIRCLE_SOURCE_ID)) {
+              map.removeSource(CIRCLE_SOURCE_ID);
+            }
           }
-          if (map.getLayer(CIRCLE_LAYER_ID)) {
-            map.removeLayer(CIRCLE_LAYER_ID);
-          }
-          if (map.getSource(CIRCLE_SOURCE_ID)) {
-            map.removeSource(CIRCLE_SOURCE_ID);
-          }
-        }
-      });
+        });
+      }
     };
   }, [map, isLoaded, features, featuresLoading, layerVisibility.terrainFeatures]);
 
@@ -570,6 +575,7 @@ const MapContainer = ({
 
     // Cleanup on unmount or when selection changes
     return () => {
+      if (!map || !map.getStyle()) return;
       [200, 300, 400].forEach(radius => {
         const layerId = `${RING_LAYER_PREFIX}-${radius}`;
         const sourceId = `${RING_SOURCE_PREFIX}-${radius}`;

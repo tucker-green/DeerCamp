@@ -8,14 +8,15 @@ export interface UserProfile {
     uid: string;
     email: string;
     displayName: string;
-    role: UserRole;
-    clubId?: string;
-    joinDate: string;
 
-    // Member Management
-    membershipTier?: MembershipTier;
-    membershipStatus?: MemberStatus;
-    approvalStatus?: ApprovalStatus;
+    // Multi-Club Support
+    clubIds: string[];           // Array of all clubs user belongs to
+    activeClubId?: string;       // Currently selected club
+    clubId?: string;             // DEPRECATED: Keep for backward compatibility during migration
+
+    // Legacy role field - role is now per-club in ClubMembership
+    role?: UserRole;             // DEPRECATED: Keep for backward compatibility
+    joinDate: string;
 
     // Contact Information
     phone?: string;
@@ -40,38 +41,114 @@ export interface UserProfile {
         verified: boolean;
     };
 
-    // Dues Tracking
-    duesStatus?: DuesStatus;
-    duesPaidUntil?: string;
-    lastDuesPayment?: string;
-
     // Profile Enhancements
     avatar?: string;
     bio?: string;
 
     // Audit Fields
-    invitedBy?: string;
-    approvedBy?: string;
     lastActive?: string;
     profileCompleteness?: number; // 0-100%
+    createdAt?: string;
 }
 
 export interface Club {
     id: string;
     name: string;
+    description?: string;
     ownerId: string;
-    members: string[];
-    location: {
-        lat: number;
-        lng: number;
-        address: string;
+
+    // Visibility & Discovery
+    isPublic: boolean;           // Can be discovered by non-members
+    requiresApproval: boolean;   // Join requests need approval
+
+    // Location
+    location?: {
+        city?: string;
+        state?: string;
+        lat?: number;
+        lng?: number;
     };
+
+    // Media
+    coverPhoto?: string;
+    photos?: string[];
+
+    // Capacity
+    memberCount: number;
+    maxMembers?: number;
+
+    // Classification
+    tags?: string[];             // e.g., ["whitetail", "turkey", "family-friendly"]
+    propertyAcres?: number;
+
+    // Settings
+    allowGuests: boolean;
+    guestPolicy?: string;
+
+    // Audit
+    createdAt: string;
+    updatedAt?: string;
+
+    // DEPRECATED: Keep for backward compatibility
+    members?: string[];
+}
+
+// Club Membership (junction table for user-club relationships)
+export interface ClubMembership {
+    id: string;
+    userId: string;
+    clubId: string;
+
+    // Role & Status
+    role: UserRole;              // owner, manager, member
+    membershipTier: MembershipTier;
+    membershipStatus: MemberStatus;
+    approvalStatus: ApprovalStatus;
+
+    // Dues Tracking (per-club)
+    duesStatus?: DuesStatus;
+    duesPaidUntil?: string;
+    lastDuesPayment?: string;
+
+    // Lifecycle
+    joinDate: string;
+    invitedBy?: string;          // uid
+    approvedBy?: string;         // uid
+    lastActive?: string;
+
+    // Audit
+    createdAt: string;
+    updatedAt?: string;
+}
+
+// Club Join Request (for public clubs requiring approval)
+export type JoinRequestStatus = 'pending' | 'approved' | 'rejected' | 'cancelled';
+
+export interface ClubJoinRequest {
+    id: string;
+    userId: string;
+    userName: string;            // Cached for display
+    userEmail: string;           // Cached for display
+    clubId: string;
+    clubName: string;            // Cached for display
+
+    // Request Details
+    message?: string;            // Why they want to join
+    status: JoinRequestStatus;
+
+    // Lifecycle
+    createdAt: string;
+    reviewedBy?: string;         // uid
+    reviewedByName?: string;     // Cached for display
+    reviewedAt?: string;
+    rejectionReason?: string;
 }
 
 export type WindDirection = 'N' | 'NE' | 'E' | 'SE' | 'S' | 'SW' | 'W' | 'NW';
 
 export interface Stand {
     id: string;
+    clubId: string;                // Club this stand belongs to
     name: string;
     type: 'ladder' | 'climber' | 'blind' | 'box';
     lat: number;
@@ -86,6 +163,8 @@ export interface Stand {
     bestWindDirections?: WindDirection[];
     condition?: 'excellent' | 'good' | 'fair' | 'needs-repair';
     notes?: string;
+    createdAt?: string;
+    createdBy?: string;
     updatedAt?: string;
 }
 
@@ -211,6 +290,7 @@ export interface MapLayerSettings {
 
 export interface Harvest {
     id: string;
+    clubId: string;            // Club where harvest occurred
     userId: string;
     userName: string;
     date: string;
@@ -220,6 +300,7 @@ export interface Harvest {
     photoUrl?: string;
     standId?: string;
     notes?: string;
+    createdAt?: string;
 }
 
 export type BookingStatus = 'confirmed' | 'checked-in' | 'completed' | 'cancelled' | 'no-show';
@@ -227,6 +308,7 @@ export type HuntType = 'morning' | 'evening' | 'all-day';
 
 export interface Booking {
     id: string;
+    clubId: string;            // Club this booking belongs to
     standId: string;
     userId: string;
     userName: string;          // Cached for display

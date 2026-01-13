@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
-import { collection, query, where, onSnapshot, doc, updateDoc, deleteDoc, getDocs, orderBy } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, doc, updateDoc, deleteDoc, getDocs, orderBy, getDoc } from 'firebase/firestore';
 import { db } from '../firebase/config';
-import type { UserProfile, UserRole, MemberStatus, DuesStatus, MembershipTier } from '../types';
+import { useAuth } from '../context/AuthContext';
+import type { UserProfile, UserRole, MemberStatus, DuesStatus, MembershipTier, ClubMembership } from '../types';
 import { calculateProfileCompleteness } from '../utils/memberHelpers';
 
 interface UseMembersOptions {
@@ -12,45 +13,75 @@ interface UseMembersOptions {
 }
 
 export function useMembers(options: UseMembersOptions = {}) {
+    const { activeClubId } = useAuth();
     const [members, setMembers] = useState<UserProfile[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
+    const targetClubId = options.clubId || activeClubId;
+
     useEffect(() => {
+        if (!targetClubId) {
+            setMembers([]);
+            setLoading(false);
+            return;
+        }
+
         setLoading(true);
         setError(null);
 
         try {
-            // Build query
-            let q = query(collection(db, 'users'), orderBy('joinDate', 'desc'));
+            // Query clubMemberships for this club
+            const membershipsQuery = query(
+                collection(db, 'clubMemberships'),
+                where('clubId', '==', targetClubId),
+                orderBy('joinDate', 'desc')
+            );
 
-            // Add filters
-            if (options.clubId) {
-                q = query(q, where('clubId', '==', options.clubId));
-            }
-
-            if (options.role) {
-                q = query(q, where('role', '==', options.role));
-            }
-
-            if (options.status) {
-                q = query(q, where('membershipStatus', '==', options.status));
-            }
-
-            if (options.duesStatus) {
-                q = query(q, where('duesStatus', '==', options.duesStatus));
-            }
-
-            // Real-time listener
+            // Real-time listener on memberships
             const unsubscribe = onSnapshot(
-                q,
-                (snapshot) => {
-                    const memberData = snapshot.docs.map(docSnap => {
-                        const data = docSnap.data();
-                        return { ...data, uid: data.uid || docSnap.id } as UserProfile;
-                    });
+                membershipsQuery,
+                async (snapshot) => {
+                    const memberships = snapshot.docs.map(doc => ({
+                        id: doc.id,
+                        ...doc.data()
+                    } as ClubMembership));
 
-                    setMembers(memberData);
+                    // Filter by role/status if provided
+                    let filteredMemberships = memberships;
+                    if (options.role) {
+                        filteredMemberships = filteredMemberships.filter(m => m.role === options.role);
+                    }
+                    if (options.status) {
+                        filteredMemberships = filteredMemberships.filter(m => m.membershipStatus === options.status);
+                    }
+                    if (options.duesStatus) {
+                        filteredMemberships = filteredMemberships.filter(m => m.duesStatus === options.duesStatus);
+                    }
+
+                    // Fetch user profiles for each membership
+                    const memberProfiles: UserProfile[] = [];
+                    for (const membership of filteredMemberships) {
+                        const userDoc = await getDoc(doc(db, 'users', membership.userId));
+                        if (userDoc.exists()) {
+                            const userData = userDoc.data() as UserProfile;
+                            // Merge membership data into profile for display
+                            memberProfiles.push({
+                                ...userData,
+                                role: membership.role,
+                                membershipTier: membership.membershipTier,
+                                membershipStatus: membership.membershipStatus,
+                                approvalStatus: membership.approvalStatus,
+                                duesStatus: membership.duesStatus,
+                                duesPaidUntil: membership.duesPaidUntil,
+                                lastDuesPayment: membership.lastDuesPayment,
+                                invitedBy: membership.invitedBy,
+                                approvedBy: membership.approvedBy,
+                            });
+                        }
+                    }
+
+                    setMembers(memberProfiles);
                     setLoading(false);
                 },
                 (err) => {
@@ -66,12 +97,35 @@ export function useMembers(options: UseMembersOptions = {}) {
             setError(err.message);
             setLoading(false);
         }
-    }, [options.clubId, options.role, options.status, options.duesStatus]);
+    }, [targetClubId, options.role, options.status, options.duesStatus]);
+
+    // Helper to find membership document
+    const findMembership = async (userId: string): Promise<string | null> => {
+        if (!targetClubId) return null;
+        try {
+            const q = query(
+                collection(db, 'clubMemberships'),
+                where('userId', '==', userId),
+                where('clubId', '==', targetClubId)
+            );
+            const snapshot = await getDocs(q);
+            if (snapshot.empty) return null;
+            return snapshot.docs[0].id;
+        } catch (err) {
+            console.error('Error finding membership:', err);
+            return null;
+        }
+    };
 
     // Update member role
     const updateMemberRole = async (userId: string, newRole: UserRole): Promise<{ success: boolean; error?: string }> => {
         try {
-            await updateDoc(doc(db, 'users', userId), {
+            const membershipId = await findMembership(userId);
+            if (!membershipId) {
+                return { success: false, error: 'Membership not found' };
+            }
+
+            await updateDoc(doc(db, 'clubMemberships', membershipId), {
                 role: newRole,
                 updatedAt: new Date().toISOString()
             });
@@ -89,7 +143,12 @@ export function useMembers(options: UseMembersOptions = {}) {
         newStatus: MemberStatus
     ): Promise<{ success: boolean; error?: string }> => {
         try {
-            await updateDoc(doc(db, 'users', userId), {
+            const membershipId = await findMembership(userId);
+            if (!membershipId) {
+                return { success: false, error: 'Membership not found' };
+            }
+
+            await updateDoc(doc(db, 'clubMemberships', membershipId), {
                 membershipStatus: newStatus,
                 updatedAt: new Date().toISOString()
             });
@@ -107,7 +166,12 @@ export function useMembers(options: UseMembersOptions = {}) {
         newTier: MembershipTier
     ): Promise<{ success: boolean; error?: string }> => {
         try {
-            await updateDoc(doc(db, 'users', userId), {
+            const membershipId = await findMembership(userId);
+            if (!membershipId) {
+                return { success: false, error: 'Membership not found' };
+            }
+
+            await updateDoc(doc(db, 'clubMemberships', membershipId), {
                 membershipTier: newTier,
                 updatedAt: new Date().toISOString()
             });
@@ -129,7 +193,12 @@ export function useMembers(options: UseMembersOptions = {}) {
         }
     ): Promise<{ success: boolean; error?: string }> => {
         try {
-            await updateDoc(doc(db, 'users', userId), {
+            const membershipId = await findMembership(userId);
+            if (!membershipId) {
+                return { success: false, error: 'Membership not found' };
+            }
+
+            await updateDoc(doc(db, 'clubMemberships', membershipId), {
                 ...duesData,
                 updatedAt: new Date().toISOString()
             });
@@ -166,10 +235,15 @@ export function useMembers(options: UseMembersOptions = {}) {
         }
     };
 
-    // Delete member
+    // Remove member from club (delete membership)
     const deleteMember = async (userId: string): Promise<{ success: boolean; error?: string }> => {
         try {
-            await deleteDoc(doc(db, 'users', userId));
+            const membershipId = await findMembership(userId);
+            if (!membershipId) {
+                return { success: false, error: 'Membership not found' };
+            }
+
+            await deleteDoc(doc(db, 'clubMemberships', membershipId));
             return { success: true };
         } catch (err: any) {
             console.error('Error deleting member:', err);

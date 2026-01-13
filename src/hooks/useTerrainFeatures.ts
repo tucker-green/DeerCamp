@@ -1,15 +1,19 @@
 import { useState, useEffect } from 'react';
 import { collection, query, where, onSnapshot, doc, addDoc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { db } from '../firebase/config';
+import { useAuth } from '../context/AuthContext';
 import type { TerrainFeature } from '../types';
 
 export function useTerrainFeatures(clubId?: string) {
+  const { activeClubId } = useAuth();
   const [features, setFeatures] = useState<TerrainFeature[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const targetClubId = clubId || activeClubId;
+
   useEffect(() => {
-    if (!clubId) {
+    if (!targetClubId) {
       setFeatures([]);
       setLoading(false);
       return;
@@ -18,7 +22,7 @@ export function useTerrainFeatures(clubId?: string) {
     try {
       const q = query(
         collection(db, 'terrainFeatures'),
-        where('clubId', '==', clubId)
+        where('clubId', '==', targetClubId)
       );
 
       const unsubscribe = onSnapshot(
@@ -44,7 +48,7 @@ export function useTerrainFeatures(clubId?: string) {
       setError(err instanceof Error ? err.message : 'Unknown error');
       setLoading(false);
     }
-  }, [clubId]);
+  }, [targetClubId]);
 
   const createFeature = async (
     feature: Omit<TerrainFeature, 'id' | 'createdAt' | 'updatedAt'>

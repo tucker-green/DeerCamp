@@ -3,94 +3,228 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Helper function to check if user is authenticated
+    // ===== HELPER FUNCTIONS =====
+
+    // Check if user is authenticated
     function isAuthenticated() {
       return request.auth != null;
     }
 
-    // Helper function to check if user is owner or manager
-    function isOwnerOrManager() {
+    // Get user's membership for a specific club
+    function getMembership(clubId) {
+      return exists(/databases/$(database)/documents/clubMemberships/$(clubId + '_' + request.auth.uid));
+    }
+
+    // Get user's role in a specific club
+    function getClubRole(clubId) {
+      let membershipPath = /databases/$(database)/documents/clubMemberships/$(clubId + '_' + request.auth.uid);
+      return exists(membershipPath) ? get(membershipPath).data.role : null;
+    }
+
+    // Check if user is a member of the club (active or pending)
+    function isMember(clubId) {
       return isAuthenticated() &&
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['owner', 'manager'];
+        exists(/databases/$(database)/documents/clubMemberships/$(clubId + '_' + request.auth.uid));
     }
 
-    // Helper function to check if user owns the resource
-    function isOwner(userId) {
-      return isAuthenticated() && request.auth.uid == userId;
-    }
-
-    // Helper function to check if user is owner
-    function isOwnerUser() {
+    // Check if user has owner or manager role in the club
+    function isManagerOrOwner(clubId) {
+      let membershipPath = /databases/$(database)/documents/clubMemberships/$(clubId + '_' + request.auth.uid);
       return isAuthenticated() &&
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'owner';
+        exists(membershipPath) &&
+        get(membershipPath).data.role in ['owner', 'manager'];
     }
 
-    // Users collection
-    // - All authenticated users can read any user profile
-    // - Users can create their own profile on signup
-    // - Users can update their own profile OR managers can edit members
-    // - Role changes only allowed by owners
-    // - Owners only can delete
+    // Check if user is owner of the club
+    function isClubOwner(clubId) {
+      let membershipPath = /databases/$(database)/documents/clubMemberships/$(clubId + '_' + request.auth.uid);
+      return isAuthenticated() &&
+        exists(membershipPath) &&
+        get(membershipPath).data.role == 'owner';
+    }
+
+    // ===== USERS COLLECTION =====
+    // Users can read any profile (for member discovery, invites, etc.)
+    // Users can create their own profile
+    // Users can only update their own profile (basic fields)
+    // ClubIds array is managed by club join/leave operations
     match /users/{userId} {
       allow read: if isAuthenticated();
       allow create: if isAuthenticated() && request.auth.uid == userId;
-
-      // Allow update if: (own profile OR manager editing) AND (role unchanged OR updater is owner)
-      // This prevents privilege escalation - managers cannot change roles
-      allow update: if (isOwner(userId) || isOwnerOrManager()) &&
-                      (request.resource.data.role == resource.data.role || isOwnerUser());
-
-      allow delete: if isOwnerUser();
+      allow update: if isAuthenticated() && request.auth.uid == userId &&
+        // Prevent users from directly modifying clubIds or activeClubId
+        (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['clubIds', 'activeClubId']) ||
+         request.resource.data.clubIds == resource.data.clubIds);
+      allow delete: if false; // Users cannot delete themselves
     }
 
-    // Stands collection
-    // - All authenticated users can read stands
-    // - Only owners/managers can create, update, or delete stands
-    match /stands/{standId} {
-      allow read: if isAuthenticated();
-      allow create, update, delete: if isOwnerOrManager();
+    // ===== CLUBS COLLECTION =====
+    // Anyone can read public clubs (for discovery)
+    // Members can read their own clubs
+    // Anyone can create a club (they become owner)
+    // Only owner can update or delete
+    match /clubs/{clubId} {
+      allow read: if resource.data.isPublic == true || isMember(clubId);
+      allow create: if isAuthenticated() &&
+        request.resource.data.ownerId == request.auth.uid;
+      allow update: if isClubOwner(clubId);
+      allow delete: if isClubOwner(clubId);
     }
 
-    // Harvests collection
-    // - All authenticated users can read all harvests
-    // - Users can create harvests with their own userId
-    // - Users can only update/delete their own harvests
-    match /harvests/{harvestId} {
-      allow read: if isAuthenticated();
+    // ===== CLUB MEMBERSHIPS COLLECTION =====
+    // Members can read memberships for their clubs
+    // System creates memberships (via cloud functions or app logic)
+    // Managers can update member roles/status
+    // Owners can delete memberships (remove members)
+    match /clubMemberships/{membershipId} {
+      allow read: if isAuthenticated() &&
+        isMember(resource.data.clubId);
+
+      // Can create if: creating own membership OR manager adding member
+      allow create: if isAuthenticated() &&
+        (request.resource.data.userId == request.auth.uid ||
+         isManagerOrOwner(request.resource.data.clubId));
+
+      // Managers can update (change roles, status)
+      // Users can update their own basic fields (not role/status)
+      allow update: if isManagerOrOwner(resource.data.clubId) ||
+        (request.auth.uid == resource.data.userId &&
+         request.resource.data.role == resource.data.role &&
+         request.resource.data.membershipStatus == resource.data.membershipStatus);
+
+      // Only managers can remove members
+      allow delete: if isManagerOrOwner(resource.data.clubId);
+    }
+
+    // ===== CLUB JOIN REQUESTS COLLECTION =====
+    // Users can read their own requests
+    // Managers can read requests for their club
+    // Users can create requests for public clubs
+    // Managers can update (approve/reject)
+    // Users can cancel their own requests
+    match /clubJoinRequests/{requestId} {
+      allow read: if isAuthenticated() &&
+        (resource.data.userId == request.auth.uid ||
+         isManagerOrOwner(resource.data.clubId));
+
       allow create: if isAuthenticated() &&
         request.resource.data.userId == request.auth.uid;
+
+      allow update: if isManagerOrOwner(resource.data.clubId) ||
+        (request.auth.uid == resource.data.userId &&
+         request.resource.data.status == 'cancelled');
+
+      allow delete: if isManagerOrOwner(resource.data.clubId);
+    }
+
+    // ===== STANDS COLLECTION =====
+    // Members can read stands from their clubs
+    // Managers can create/update/delete stands
+    match /stands/{standId} {
+      allow read: if isAuthenticated() && isMember(resource.data.clubId);
+      allow create: if isAuthenticated() &&
+        isManagerOrOwner(request.resource.data.clubId);
+      allow update, delete: if isAuthenticated() &&
+        isManagerOrOwner(resource.data.clubId);
+    }
+
+    // ===== BOOKINGS COLLECTION =====
+    // Members can read bookings from their clubs
+    // Members can create bookings for themselves
+    // Members can update/cancel their own bookings
+    // Managers can manage all bookings
+    match /bookings/{bookingId} {
+      allow read: if isAuthenticated() && isMember(resource.data.clubId);
+
+      allow create: if isAuthenticated() &&
+        request.resource.data.userId == request.auth.uid &&
+        isMember(request.resource.data.clubId);
+
+      allow update: if isAuthenticated() &&
+        (resource.data.userId == request.auth.uid ||
+         isManagerOrOwner(resource.data.clubId));
+
+      allow delete: if isAuthenticated() &&
+        (resource.data.userId == request.auth.uid ||
+         isManagerOrOwner(resource.data.clubId));
+    }
+
+    // ===== HARVESTS COLLECTION =====
+    // Members can read harvests from their clubs
+    // Members can create their own harvests
+    // Members can update/delete their own harvests
+    match /harvests/{harvestId} {
+      allow read: if isAuthenticated() && isMember(resource.data.clubId);
+
+      allow create: if isAuthenticated() &&
+        request.resource.data.userId == request.auth.uid &&
+        isMember(request.resource.data.clubId);
+
       allow update, delete: if isAuthenticated() &&
         resource.data.userId == request.auth.uid;
     }
 
-    // Bookings collection
-    // - All authenticated users can read all bookings
-    // - Users can create bookings with their own userId
-    // - Users can only update/delete their own bookings
-    // - Owners/managers can delete any booking
-    match /bookings/{bookingId} {
-      allow read: if isAuthenticated();
-      allow create: if isAuthenticated() &&
-        request.resource.data.userId == request.auth.uid;
-      allow update: if isAuthenticated() &&
-        resource.data.userId == request.auth.uid;
-      allow delete: if isOwner(resource.data.userId) || isOwnerOrManager();
-    }
-
-    // Invites collection
-    // - Managers+ and invitee can read invites
-    // - Managers+ can create invites
-    // - Creator or managers can update/cancel invites
-    // - Managers+ can delete invites
+    // ===== INVITES COLLECTION =====
+    // Invitees and managers can read invites
+    // Managers can create invites
+    // Managers can update/delete invites
     match /invites/{inviteId} {
       allow read: if isAuthenticated() &&
-        (isOwnerOrManager() || resource.data.email == request.auth.token.email);
-      allow create: if isAuthenticated() && isOwnerOrManager();
-      allow update: if isAuthenticated() &&
-        (resource.data.invitedBy == request.auth.uid || isOwnerOrManager());
-      allow delete: if isOwnerOrManager();
+        (resource.data.email == request.auth.token.email ||
+         isManagerOrOwner(resource.data.clubId));
+
+      allow create: if isAuthenticated() &&
+        isManagerOrOwner(request.resource.data.clubId);
+
+      allow update, delete: if isAuthenticated() &&
+        isManagerOrOwner(resource.data.clubId);
     }
 
+    // ===== PROPERTY/MAP DATA =====
+    // Members can read property data from their clubs
+    // Managers can create/update/delete property data
+
+    match /propertyBoundaries/{boundaryId} {
+      allow read: if isAuthenticated() && isMember(resource.data.clubId);
+      allow create: if isAuthenticated() &&
+        isManagerOrOwner(request.resource.data.clubId);
+      allow update, delete: if isAuthenticated() &&
+        isManagerOrOwner(resource.data.clubId);
+    }
+
+    match /foodPlots/{plotId} {
+      allow read: if isAuthenticated() && isMember(resource.data.clubId);
+      allow create: if isAuthenticated() &&
+        isManagerOrOwner(request.resource.data.clubId);
+      allow update, delete: if isAuthenticated() &&
+        isManagerOrOwner(resource.data.clubId);
+    }
+
+    match /accessRoutes/{routeId} {
+      allow read: if isAuthenticated() && isMember(resource.data.clubId);
+      allow create: if isAuthenticated() &&
+        isManagerOrOwner(request.resource.data.clubId);
+      allow update, delete: if isAuthenticated() &&
+        isManagerOrOwner(resource.data.clubId);
+    }
+
+    match /terrainFeatures/{featureId} {
+      allow read: if isAuthenticated() && isMember(resource.data.clubId);
+      allow create: if isAuthenticated() &&
+        isManagerOrOwner(request.resource.data.clubId);
+      allow update, delete: if isAuthenticated() &&
+        isManagerOrOwner(resource.data.clubId);
+    }
+
+    match /trailCameras/{cameraId} {
+      allow read: if isAuthenticated() && isMember(resource.data.clubId);
+      allow create: if isAuthenticated() &&
+        isManagerOrOwner(request.resource.data.clubId);
+      allow update, delete: if isAuthenticated() &&
+        isManagerOrOwner(resource.data.clubId);
+    }
+
+    // ===== DEFAULT DENY =====
     // Deny all other access
     match /{document=**} {
       allow read, write: if false;

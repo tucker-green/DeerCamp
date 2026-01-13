@@ -4,6 +4,7 @@ import { auth } from '../firebase/config';
 import { LogOut, Home, Map as MapIcon, ClipboardList, Users, Menu, X, Sparkles, Calendar, Globe, Settings } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
+import ClubSwitcher from './ClubSwitcher';
 
 const Navbar = () => {
     const navigate = useNavigate();
@@ -53,6 +54,8 @@ const Navbar = () => {
                             <span className="bg-gradient-to-r from-green-400 to-green-600 bg-clip-text text-transparent">Deer</span>
                             <span className="text-white">Camp</span>
                         </motion.h1>
+
+                        <ClubSwitcher />
 
                         <div className="hidden md:flex items-center gap-1 bg-white/5 p-1.5 rounded-full border border-white/10 shadow-lg backdrop-blur-sm">
                             {navItems.map((item) => (

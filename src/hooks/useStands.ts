@@ -1,15 +1,26 @@
 import { useState, useEffect } from 'react';
-import { collection, query, onSnapshot, updateDoc, doc } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, updateDoc, doc } from 'firebase/firestore';
 import { db } from '../firebase/config';
+import { useAuth } from '../context/AuthContext';
 import type { Stand } from '../types';
 
 export function useStands() {
+  const { activeClubId } = useAuth();
   const [stands, setStands] = useState<Stand[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const q = query(collection(db, 'stands'));
+    if (!activeClubId) {
+      setStands([]);
+      setLoading(false);
+      return;
+    }
+
+    const q = query(
+      collection(db, 'stands'),
+      where('clubId', '==', activeClubId)
+    );
 
     const unsubscribe = onSnapshot(
       q,
@@ -29,7 +40,7 @@ export function useStands() {
     );
 
     return unsubscribe;
-  }, []);
+  }, [activeClubId]);
 
   const updateStand = async (standId: string, updates: Partial<Stand>) => {
     try {

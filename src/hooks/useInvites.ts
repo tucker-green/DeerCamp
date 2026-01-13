@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { collection, query, where, onSnapshot, addDoc, updateDoc, deleteDoc, doc, getDocs, orderBy } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, addDoc, updateDoc, deleteDoc, doc, getDocs, orderBy, arrayUnion, getDoc } from 'firebase/firestore';
 import { db } from '../firebase/config';
+import { useAuth } from '../context/AuthContext';
 import type { Invite, InviteStatus, UserRole, MembershipTier } from '../types';
 import { generateInviteCode, getInviteExpirationDate, isInviteExpired } from '../utils/memberHelpers';
 
@@ -10,12 +11,16 @@ interface UseInvitesOptions {
 }
 
 export function useInvites(options: UseInvitesOptions = {}) {
+    const { activeClubId } = useAuth();
     const [invites, setInvites] = useState<Invite[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
+    const targetClubId = options.clubId || activeClubId;
+
     useEffect(() => {
-        if (!options.clubId) {
+        if (!targetClubId) {
+            setInvites([]);
             setLoading(false);
             return;
         }
@@ -27,7 +32,7 @@ export function useInvites(options: UseInvitesOptions = {}) {
             // Build query
             let q = query(
                 collection(db, 'invites'),
-                where('clubId', '==', options.clubId),
+                where('clubId', '==', targetClubId),
                 orderBy('createdAt', 'desc')
             );
 
@@ -60,7 +65,7 @@ export function useInvites(options: UseInvitesOptions = {}) {
             setError(err.message);
             setLoading(false);
         }
-    }, [options.clubId, options.status]);
+    }, [targetClubId, options.status]);
 
     // Create invite
     const createInvite = async (inviteData: {
@@ -188,16 +193,35 @@ export function useInvites(options: UseInvitesOptions = {}) {
                 acceptedAt: new Date().toISOString()
             });
 
-            // Update user profile with invite data
-            await updateDoc(doc(db, 'users', userId), {
+            // Get user's current profile
+            const userDoc = await getDoc(doc(db, 'users', userId));
+            const userProfile = userDoc.exists() ? userDoc.data() : null;
+
+            // Create ClubMembership record
+            await addDoc(collection(db, 'clubMemberships'), {
+                userId,
+                clubId: invite.clubId,
                 role: invite.role,
                 membershipTier: invite.membershipTier,
-                clubId: invite.clubId,
-                invitedBy: invite.invitedBy,
-                approvalStatus: 'approved', // Auto-approve invited members
                 membershipStatus: 'active',
-                updatedAt: new Date().toISOString()
+                approvalStatus: 'approved', // Auto-approve invited members
+                invitedBy: invite.invitedBy,
+                joinDate: new Date().toISOString(),
+                createdAt: new Date().toISOString()
             });
+
+            // Update user profile - add to clubIds array and set as active if first club
+            const updates: any = {
+                clubIds: arrayUnion(invite.clubId),
+                updatedAt: new Date().toISOString()
+            };
+
+            // If this is the user's first club, set it as active
+            if (!userProfile || !userProfile.clubIds || userProfile.clubIds.length === 0) {
+                updates.activeClubId = invite.clubId;
+            }
+
+            await updateDoc(doc(db, 'users', userId), updates);
 
             return { success: true, invite };
         } catch (err: any) {

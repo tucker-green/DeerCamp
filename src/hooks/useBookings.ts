@@ -12,6 +12,7 @@ import {
   deleteDoc
 } from 'firebase/firestore';
 import { db } from '../firebase/config';
+import { useAuth } from '../context/AuthContext';
 import type { Booking } from '../types';
 import { checkBookingConflict, validateBookingTime } from '../utils/bookingHelpers';
 
@@ -23,17 +24,28 @@ interface UseBookingsOptions {
 }
 
 export function useBookings(options: UseBookingsOptions = {}) {
+  const { activeClubId } = useAuth();
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (!activeClubId) {
+      setBookings([]);
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
 
-    // Build query
-    let q = query(collection(db, 'bookings'), orderBy('startTime', 'asc'));
+    // Build query - ALWAYS filter by clubId first
+    let q = query(
+      collection(db, 'bookings'),
+      where('clubId', '==', activeClubId),
+      orderBy('startTime', 'asc')
+    );
 
-    // Apply filters
+    // Apply additional filters
     if (options.standId) {
       q = query(q, where('standId', '==', options.standId));
     }
@@ -72,7 +84,7 @@ export function useBookings(options: UseBookingsOptions = {}) {
     );
 
     return unsubscribe;
-  }, [options.standId, options.userId, options.date, options.status]);
+  }, [activeClubId, options.standId, options.userId, options.date, options.status]);
 
   /**
    * Create a new booking
@@ -110,6 +122,7 @@ export function useBookings(options: UseBookingsOptions = {}) {
       // Create booking
       const now = new Date().toISOString();
       const docRef = await addDoc(collection(db, 'bookings'), {
+        clubId: activeClubId,
         standId: bookingData.standId,
         standName: bookingData.standName,
         userId: bookingData.userId,

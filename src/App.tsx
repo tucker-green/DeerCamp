@@ -11,6 +11,8 @@ import MembersPage from './pages/MembersPage';
 import InviteMemberPage from './pages/InviteMemberPage';
 import MapPage from './pages/MapPage';
 import PropertyManagementPage from './pages/PropertyManagementPage';
+import CreateClubPage from './pages/CreateClubPage';
+import ClubDiscoveryPage from './pages/ClubDiscoveryPage';
 import Navbar from './components/Navbar';
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -44,6 +46,8 @@ function App() {
                         <Route path="/members" element={<MembersPage />} />
                         <Route path="/members/invite" element={<InviteMemberPage />} />
                         <Route path="/property-management" element={<PropertyManagementPage />} />
+                        <Route path="/clubs/create" element={<CreateClubPage />} />
+                        <Route path="/clubs/discover" element={<ClubDiscoveryPage />} />
                       </Routes>
                     </main>
                   </>

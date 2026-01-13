@@ -1,15 +1,19 @@
 import { useState, useEffect } from 'react';
 import { collection, query, where, onSnapshot, doc, addDoc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { db } from '../firebase/config';
+import { useAuth } from '../context/AuthContext';
 import type { FoodPlot } from '../types';
 
 export function useFoodPlots(clubId?: string) {
+  const { activeClubId } = useAuth();
   const [foodPlots, setFoodPlots] = useState<FoodPlot[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const targetClubId = clubId || activeClubId;
+
   useEffect(() => {
-    if (!clubId) {
+    if (!targetClubId) {
       setFoodPlots([]);
       setLoading(false);
       return;
@@ -18,7 +22,7 @@ export function useFoodPlots(clubId?: string) {
     try {
       const q = query(
         collection(db, 'foodPlots'),
-        where('clubId', '==', clubId)
+        where('clubId', '==', targetClubId)
       );
 
       const unsubscribe = onSnapshot(
@@ -44,7 +48,7 @@ export function useFoodPlots(clubId?: string) {
       setError(err instanceof Error ? err.message : 'Unknown error');
       setLoading(false);
     }
-  }, [clubId]);
+  }, [targetClubId]);
 
   const createFoodPlot = async (
     plot: Omit<FoodPlot, 'id' | 'createdAt' | 'updatedAt'>
