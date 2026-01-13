@@ -13,12 +13,12 @@ import { useTerrainFeatures } from '../hooks/useTerrainFeatures';
 import { useTrailCameras } from '../hooks/useTrailCameras';
 
 const PropertyManagementPage = () => {
-  const { profile } = useAuth();
-  const { boundaries, loading: boundariesLoading, deleteBoundary } = usePropertyBoundaries(profile?.clubId);
-  const { foodPlots, loading: foodPlotsLoading, deleteFoodPlot } = useFoodPlots(profile?.clubId);
-  const { routes, loading: routesLoading, deleteRoute } = useAccessRoutes(profile?.clubId);
-  const { features, loading: featuresLoading, deleteFeature } = useTerrainFeatures(profile?.clubId);
-  const { cameras, loading: camerasLoading, deleteCamera } = useTrailCameras(profile?.clubId);
+  const { activeClubId, activeMembership } = useAuth();
+  const { boundaries, loading: boundariesLoading, deleteBoundary } = usePropertyBoundaries(activeClubId);
+  const { foodPlots, loading: foodPlotsLoading, deleteFoodPlot } = useFoodPlots(activeClubId);
+  const { routes, loading: routesLoading, deleteRoute } = useAccessRoutes(activeClubId);
+  const { features, loading: featuresLoading, deleteFeature } = useTerrainFeatures(activeClubId);
+  const { cameras, loading: camerasLoading, deleteCamera } = useTrailCameras(activeClubId);
 
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(['boundaries']));
 
@@ -35,7 +35,7 @@ const PropertyManagementPage = () => {
   };
 
   // Check permissions
-  const canManage = profile?.role === 'owner' || profile?.role === 'manager';
+  const canManage = activeMembership?.role === 'owner' || activeMembership?.role === 'manager';
 
   if (!canManage) {
     return (

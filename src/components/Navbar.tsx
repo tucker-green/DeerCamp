@@ -78,7 +78,7 @@ const Navbar = () => {
                                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
                                     <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
                                 </span>
-                                <p className="text-[10px] text-green-400 font-semibold uppercase tracking-wider">{profile?.role}</p>
+                                <p className="text-[10px] text-green-400 font-semibold uppercase tracking-wider">{activeMembership?.role}</p>
                             </div>
                         </div>
 
@@ -137,7 +137,7 @@ const Navbar = () => {
                                                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
                                                     <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
                                                 </span>
-                                                <p className="text-xs text-green-400 font-semibold uppercase">{profile?.role}</p>
+                                                <p className="text-xs text-green-400 font-semibold uppercase">{activeMembership?.role}</p>
                                             </div>
                                         </div>
                                     </div>

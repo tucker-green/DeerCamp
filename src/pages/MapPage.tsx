@@ -13,7 +13,7 @@ import type { StandFilters } from '../components/map/StandFilter';
 
 const MapPage = () => {
   const navigate = useNavigate();
-  const { profile } = useAuth();
+  const { activeClubId, activeMembership } = useAuth();
   const [selectedStand, setSelectedStand] = useState<Stand | null>(null);
   const [showFilters, setShowFilters] = useState(false);
   const [showLayerControls, setShowLayerControls] = useState(false);
@@ -125,7 +125,7 @@ const MapPage = () => {
   }, []);
 
   // Check if user has permission to draw boundaries (owner or manager)
-  const canDrawBoundaries = profile?.role === 'owner' || profile?.role === 'manager';
+  const canDrawBoundaries = activeMembership?.role === 'owner' || activeMembership?.role === 'manager';
   const isDrawing = isDrawingBoundary || isDrawingFoodPlot || isDrawingAccessRoute;
   const isToolActive = isDrawing || isMeasuring;
 
@@ -253,7 +253,7 @@ const MapPage = () => {
         className="flex-1 px-4"
       >
         <MapContainer
-          clubId={profile?.clubId}
+          clubId={activeClubId}
           onStandClick={handleStandClick}
           selectedStandForRings={selectedStandForRings || undefined}
           showDistanceRings={true}

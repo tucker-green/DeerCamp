@@ -2,21 +2,30 @@
 
 ## ✅ Completed
 
-### Phase 1 (2026-01-12)
+### Phase 1 (2026-01-12 - Morning)
 - [x] **Removed 50+ temporary files** (`tmpclaude-*-cwd`)
 - [x] **Updated .gitignore** to exclude temporary files and .claude/ directory
-- [x] **Fixed Navbar deprecated role field** - Now uses `activeMembership.role`
+- [x] **Fixed Navbar deprecated role field logic** - Now uses `activeMembership.role` for permission checks
 - [x] **Updated memberHelpers.ts** - Created new ClubMembership-based helpers, deprecated old ones
 - [x] **Removed debug console.log statements** (4 files cleaned)
 - [x] **Added ErrorBoundary component** with user-friendly error UI
 - [x] **Added environment variable validation** in main.tsx
 - [x] **Integrated ErrorBoundary** into app root
 
+### Phase 2 (2026-01-12 - Evening)
+- [x] **Audited and fixed MembersPage.tsx** - Updated to use `activeClubId` and `activeMembership`
+- [x] **Fixed all remaining deprecated field usage** across entire codebase:
+  - ✅ **Navbar.tsx** - Fixed UI display to show `activeMembership.role` instead of `profile.role`
+  - ✅ **MapPage.tsx** - Updated permission checks and clubId prop to use `activeMembership` and `activeClubId`
+  - ✅ **PropertyManagementPage.tsx** - Updated all hooks and permission checks to use `activeClubId` and `activeMembership`
+  - ✅ **InviteMemberPage.tsx** - Updated invite creation and role selection to use `activeClubId` and `activeMembership`
+- [x] **Verified zero deprecated field usage** - Confirmed no `profile?.role`, `profile.role`, `profile?.clubId`, or `profile.clubId` references remain in src/
+
 ---
 
-## 🔴 **CRITICAL: Multi-Club Migration Issues**
+## 🔴 **CRITICAL: Multi-Club Migration Issues** ✅ ALL FIXED
 
-### ~~1. Navbar Using Deprecated Role Field~~ ✅ FIXED
+### ~~1. Navbar Using Deprecated Role Field~~ ✅ FIXED (Phase 1 + Phase 2)
 **File:** `src/components/Navbar.tsx:31-33`
 
 **Problem:**
@@ -92,6 +101,31 @@ export function canPromoteUser(member: UserProfile, currentUserRole: UserRole): 
 - ✅ Component works correctly - `member.role` comes from merged ClubMembership data
 - ✅ All role references use the merged data from `useMembers` hook
 - ✅ No changes needed - hook already merges ClubMembership data (lines 68-80 in useMembers.ts)
+
+---
+
+### ~~4. Additional Files with Deprecated Field Usage~~ ✅ FIXED
+**Files Fixed in Phase 2:**
+
+**src/pages/MapPage.tsx**
+- Updated useAuth destructuring to use `activeClubId` and `activeMembership`
+- Fixed permission check: `activeMembership?.role` instead of `profile?.role`
+- Fixed MapContainer clubId prop: `activeClubId` instead of `profile?.clubId`
+
+**src/pages/PropertyManagementPage.tsx**
+- Updated all hook calls to use `activeClubId` instead of `profile?.clubId`:
+  - usePropertyBoundaries, useFoodPlots, useAccessRoutes, useTerrainFeatures, useTrailCameras
+- Fixed permission check: `activeMembership?.role` instead of `profile?.role`
+
+**src/pages/InviteMemberPage.tsx**
+- Updated useInvites to use `activeClubId` instead of `profile?.clubId`
+- Fixed validation check to use `activeClubId`
+- Fixed createInvite call to use `activeClubId`
+- Fixed owner role option visibility: `activeMembership?.role` instead of `profile?.role`
+
+**src/components/Navbar.tsx (Phase 2 - UI Display)**
+- Fixed role display in both desktop and mobile menus: `activeMembership?.role` instead of `profile?.role`
+- Note: Permission logic was already fixed in Phase 1
 
 ---
 
@@ -373,5 +407,5 @@ Before deploying multi-club to production:
 
 ---
 
-**Last Updated:** 2026-01-12 (Evening - MembersPage audit complete)
-**Status:** Active cleanup backlog
+**Last Updated:** 2026-01-12 (Evening - ALL deprecated field usage eliminated)
+**Status:** All critical multi-club migration issues FIXED ✅

@@ -9,8 +9,8 @@ import { validateEmail } from '../utils/memberHelpers';
 
 export default function InviteMemberPage() {
     const navigate = useNavigate();
-    const { user, profile } = useAuth();
-    const { createInvite } = useInvites({ clubId: profile?.clubId });
+    const { user, profile, activeClubId, activeMembership } = useAuth();
+    const { createInvite } = useInvites({ clubId: activeClubId });
 
     const [email, setEmail] = useState('');
     const [role, setRole] = useState<UserRole>('member');
@@ -41,7 +41,7 @@ export default function InviteMemberPage() {
             return;
         }
 
-        if (!profile.clubId) {
+        if (!activeClubId) {
             setError('You must be a member of a club to invite others');
             setLoading(false);
             return;
@@ -52,9 +52,9 @@ export default function InviteMemberPage() {
                 email,
                 role,
                 membershipTier: tier,
-                clubId: profile.clubId,
+                clubId: activeClubId,
                 invitedBy: user.uid,
-                invitedByName: profile.displayName,
+                invitedByName: profile?.displayName || 'Unknown',
                 message: message || undefined
             });
 
@@ -209,7 +209,7 @@ export default function InviteMemberPage() {
                     >
                         <option value="member">Member</option>
                         <option value="manager">Manager</option>
-                        {profile?.role === 'owner' && <option value="owner">Owner</option>}
+                        {activeMembership?.role === 'owner' && <option value="owner">Owner</option>}
                     </select>
                     <p className="text-xs text-gray-500 mt-2">
                         {role === 'owner' && 'Full control over club settings and members'}
