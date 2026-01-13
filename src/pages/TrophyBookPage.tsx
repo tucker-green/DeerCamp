@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Trophy, TrendingUp, Calendar, Award, Filter } from 'lucide-react';
+import { Trophy, TrendingUp, Award } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { getClubRecords, getHarvestStats, type ClubRecord } from '../utils/trophyRecords';
 

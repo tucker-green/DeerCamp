@@ -1,4 +1,4 @@
-import { collection, query, where, getDocs, orderBy, limit } from 'firebase/firestore';
+import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import type { Harvest } from '../types';
 

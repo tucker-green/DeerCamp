@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Ruler, X, Trash2 } from 'lucide-react';
 import type { Map as MapboxMap, MapMouseEvent } from 'mapbox-gl';
-import mapboxgl from 'mapbox-gl';
 
 interface MeasureToolProps {
   map: MapboxMap;

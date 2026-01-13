@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { auth } from '../firebase/config';
-import { LogOut, Home, Map as MapIcon, ClipboardList, Users, Menu, X, Sparkles, Calendar, Globe, Settings } from 'lucide-react';
+import { LogOut, Home, Map as MapIcon, ClipboardList, Users, Menu, X, Sparkles, Calendar, Globe, Settings, Trophy } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import ClubSwitcher from './ClubSwitcher';
@@ -24,6 +24,7 @@ const Navbar = () => {
         { icon: <Globe size={16} />, label: 'Map', path: '/map' },
         { icon: <Calendar size={16} />, label: 'Stand Board', path: '/bookings' },
         { icon: <ClipboardList size={16} />, label: 'Harvests', path: '/harvests' },
+        { icon: <Trophy size={16} />, label: 'Trophy Book', path: '/trophy-book' },
         { icon: <Users size={16} />, label: 'Members', path: '/members' },
     ];
 

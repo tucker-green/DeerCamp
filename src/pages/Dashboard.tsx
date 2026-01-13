@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
-import { Target, Calendar, MapPin, TrendingUp, Sun, CloudRain, Wind, ArrowUpRight, Thermometer, Droplets } from 'lucide-react';
+import { Target, Calendar, MapPin, TrendingUp, Sun, Wind, ArrowUpRight, Thermometer, Droplets } from 'lucide-react';
 
 const Dashboard = () => {
     const { profile } = useAuth();

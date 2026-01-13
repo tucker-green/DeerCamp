@@ -6,7 +6,7 @@ import { db } from '../firebase/config';
 import type { Stand } from '../types';
 import { useBookings } from '../hooks/useBookings';
 import { getSunTimes } from '../utils/bookingHelpers';
-import { Calendar, Clock, StickyNote, ArrowLeft, CheckCircle } from 'lucide-react';
+import { Calendar, StickyNote, ArrowLeft, CheckCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 const NewBookingPage = () => {

@@ -49,7 +49,7 @@ export async function validateBookingRules(
 ): Promise<{ valid: boolean; error?: string }> {
 
   const now = new Date();
-  const { startTime, endTime, userId, standId, clubId, isGuest } = bookingData;
+  const { startTime, userId, standId, clubId, isGuest } = bookingData;
 
   // Rule 1: Check max days in advance
   if (rulesConfig.maxDaysInAdvance) {

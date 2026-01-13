@@ -10,7 +10,7 @@ import { validateEmail } from '../utils/memberHelpers';
 export default function InviteMemberPage() {
     const navigate = useNavigate();
     const { user, profile, activeClubId, activeMembership } = useAuth();
-    const { createInvite } = useInvites({ clubId: activeClubId });
+    const { createInvite } = useInvites({ clubId: activeClubId || undefined });
 
     const [email, setEmail] = useState('');
     const [role, setRole] = useState<UserRole>('member');

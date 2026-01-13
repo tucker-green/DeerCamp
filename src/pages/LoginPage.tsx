@@ -44,7 +44,7 @@ const LoginPage = () => {
             await setPersistence(auth, browserLocalPersistence);
 
             const provider = new GoogleAuthProvider();
-            const result = await signInWithPopup(auth, provider);
+            await signInWithPopup(auth, provider);
             navigate('/');
         } catch (err: any) {
             console.error('❌ Google Sign-In Error:', err);

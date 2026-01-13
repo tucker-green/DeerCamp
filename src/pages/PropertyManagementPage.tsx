@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import {
-  MapIcon, Trash2, Edit3, Eye,
+  MapIcon, Trash2,
   ChevronDown, ChevronRight, AlertCircle,
   Users, Calendar
 } from 'lucide-react';
@@ -14,11 +14,11 @@ import { useTrailCameras } from '../hooks/useTrailCameras';
 
 const PropertyManagementPage = () => {
   const { activeClubId, activeMembership } = useAuth();
-  const { boundaries, loading: boundariesLoading, deleteBoundary } = usePropertyBoundaries(activeClubId);
-  const { foodPlots, loading: foodPlotsLoading, deleteFoodPlot } = useFoodPlots(activeClubId);
-  const { routes, loading: routesLoading, deleteRoute } = useAccessRoutes(activeClubId);
-  const { features, loading: featuresLoading, deleteFeature } = useTerrainFeatures(activeClubId);
-  const { cameras, loading: camerasLoading, deleteCamera } = useTrailCameras(activeClubId);
+  const { boundaries, loading: boundariesLoading, deleteBoundary } = usePropertyBoundaries(activeClubId || undefined);
+  const { foodPlots, loading: foodPlotsLoading, deleteFoodPlot } = useFoodPlots(activeClubId || undefined);
+  const { routes, loading: routesLoading, deleteRoute } = useAccessRoutes(activeClubId || undefined);
+  const { features, loading: featuresLoading, deleteFeature } = useTerrainFeatures(activeClubId || undefined);
+  const { cameras, loading: camerasLoading, deleteCamera } = useTrailCameras(activeClubId || undefined);
 
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(['boundaries']));
 

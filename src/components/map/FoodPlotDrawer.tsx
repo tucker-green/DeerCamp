@@ -9,7 +9,6 @@ import {
 } from '../../utils/boundaryDrawHelpers';
 import { useFoodPlots } from '../../hooks/useFoodPlots';
 import { useAuth } from '../../context/AuthContext';
-import type { FoodPlot } from '../../types';
 
 interface FoodPlotDrawerProps {
   map: MapboxMap;

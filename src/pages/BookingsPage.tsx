@@ -1,16 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from '../firebase/config';
-import type { Stand, Booking } from '../types';
+import type { Stand } from '../types';
 import { useBookingsByDate } from '../hooks/useBookings';
 import { formatBookingDate, getSunTimes } from '../utils/bookingHelpers';
 import { Calendar, Plus, ChevronLeft, ChevronRight, Sun, Moon } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 const BookingsPage = () => {
-  const { user, profile } = useAuth();
+  const { user } = useAuth();
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [stands, setStands] = useState<Stand[]>([]);
   const [loading, setLoading] = useState(true);

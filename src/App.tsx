@@ -13,6 +13,7 @@ import MapPage from './pages/MapPage';
 import PropertyManagementPage from './pages/PropertyManagementPage';
 import CreateClubPage from './pages/CreateClubPage';
 import ClubDiscoveryPage from './pages/ClubDiscoveryPage';
+import TrophyBookPage from './pages/TrophyBookPage';
 import Navbar from './components/Navbar';
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -38,6 +39,7 @@ function App() {
                       <Routes>
                         <Route path="/" element={<Dashboard />} />
                         <Route path="/harvests" element={<HarvestPage />} />
+                        <Route path="/trophy-book" element={<TrophyBookPage />} />
                         <Route path="/stands" element={<StandsPage />} />
                         <Route path="/map" element={<MapPage />} />
                         <Route path="/bookings" element={<BookingsPage />} />

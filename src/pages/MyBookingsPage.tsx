@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useMyBookings } from '../hooks/useBookings';
 import { formatBookingDate, formatTimeRange, canModifyBooking } from '../utils/bookingHelpers';
-import { Calendar, Clock, MapPin, StickyNote, X, CheckCircle, Plus } from 'lucide-react';
+import { Calendar, Clock, StickyNote, X, CheckCircle, Plus } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const MyBookingsPage = () => {

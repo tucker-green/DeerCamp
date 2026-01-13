@@ -9,7 +9,7 @@ import {
 } from '../../utils/boundaryDrawHelpers';
 import { useAccessRoutes } from '../../hooks/useAccessRoutes';
 import { useAuth } from '../../context/AuthContext';
-import type { AccessRoute, AccessRouteType } from '../../types';
+import type { AccessRouteType } from '../../types';
 
 interface AccessRouteDrawerProps {
   map: MapboxMap;
@@ -18,13 +18,6 @@ interface AccessRouteDrawerProps {
   onDrawingComplete: () => void;
   onCancel: () => void;
 }
-
-const ROUTE_COLORS: Record<AccessRouteType, string> = {
-  'road': '#8b5e3c',
-  'atv-trail': '#d4a373',
-  'walking-path': '#e9c46a',
-  'quiet-approach': '#6b7280',
-};
 
 const AccessRouteDrawer = ({
   map,

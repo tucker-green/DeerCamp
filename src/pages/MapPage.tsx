@@ -17,7 +17,6 @@ const MapPage = () => {
   const [selectedStand, setSelectedStand] = useState<Stand | null>(null);
   const [showFilters, setShowFilters] = useState(false);
   const [showLayerControls, setShowLayerControls] = useState(false);
-  const [filters, setFilters] = useState<StandFilters>({ types: [], statuses: [] });
   const [isDrawingBoundary, setIsDrawingBoundary] = useState(false);
   const [isDrawingFoodPlot, setIsDrawingFoodPlot] = useState(false);
   const [isDrawingAccessRoute, setIsDrawingAccessRoute] = useState(false);
@@ -42,10 +41,9 @@ const MapPage = () => {
     navigate(`/bookings/new?standId=${stand.id}`);
   }, [navigate]);
 
-  const handleFilterChange = useCallback((newFilters: StandFilters) => {
-    setFilters(newFilters);
+  const handleFilterChange = useCallback((_newFilters: StandFilters) => {
     // Filter implementation would go here
-    // For MVP, we're just storing the filters
+    // For MVP, filters are handled by the MapContainer component
   }, []);
 
   const handleStartDrawingBoundary = useCallback(() => {
@@ -253,7 +251,7 @@ const MapPage = () => {
         className="flex-1 px-4"
       >
         <MapContainer
-          clubId={activeClubId}
+          clubId={activeClubId || undefined}
           onStandClick={handleStandClick}
           selectedStandForRings={selectedStandForRings || undefined}
           showDistanceRings={true}

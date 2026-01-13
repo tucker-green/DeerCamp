@@ -9,7 +9,7 @@ export interface MapOptions {
 }
 
 export function useMapbox(
-  containerRef: React.RefObject<HTMLDivElement>,
+  containerRef: React.RefObject<HTMLDivElement | null>,
   options: MapOptions = {}
 ) {
   const [map, setMap] = useState<mapboxgl.Map | null>(null);
