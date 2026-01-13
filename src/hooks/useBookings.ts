@@ -15,6 +15,7 @@ import { db } from '../firebase/config';
 import { useAuth } from '../context/AuthContext';
 import type { Booking } from '../types';
 import { checkBookingConflict, validateBookingTime } from '../utils/bookingHelpers';
+import { validateBookingRules, type BookingRulesConfig } from '../utils/bookingRules';
 
 interface UseBookingsOptions {
   standId?: string;
@@ -98,12 +99,31 @@ export function useBookings(options: UseBookingsOptions = {}) {
     endTime: Date;
     huntType?: 'morning' | 'evening' | 'all-day';
     notes?: string;
+    isGuest?: boolean;
+    rulesConfig?: BookingRulesConfig;
   }) => {
     try {
       // Validate times
       const validation = validateBookingTime(bookingData.startTime, bookingData.endTime);
       if (!validation.valid) {
         throw new Error(validation.error);
+      }
+
+      // Validate against club rules
+      const rulesValidation = await validateBookingRules(
+        {
+          userId: bookingData.userId,
+          standId: bookingData.standId,
+          startTime: bookingData.startTime,
+          endTime: bookingData.endTime,
+          clubId: activeClubId!,
+          isGuest: bookingData.isGuest
+        },
+        bookingData.rulesConfig
+      );
+
+      if (!rulesValidation.valid) {
+        throw new Error(rulesValidation.error);
       }
 
       // Check for conflicts
