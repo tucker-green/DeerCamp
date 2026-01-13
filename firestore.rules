@@ -80,10 +80,12 @@ service cloud.firestore {
       allow read: if isAuthenticated() &&
         isMember(resource.data.clubId);
 
-      // Can create if: creating own membership OR manager adding member
+      // Can create if: creating own membership OR manager adding member OR creating owner membership for your club
       allow create: if isAuthenticated() &&
         (request.resource.data.userId == request.auth.uid ||
-         isManagerOrOwner(request.resource.data.clubId));
+         isManagerOrOwner(request.resource.data.clubId) ||
+         (request.resource.data.role == 'owner' &&
+          get(/databases/$(database)/documents/clubs/$(request.resource.data.clubId)).data.ownerId == request.auth.uid));
 
       // Managers can update (change roles, status)
       // Users can update their own basic fields (not role/status)
