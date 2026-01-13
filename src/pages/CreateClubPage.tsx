@@ -30,21 +30,50 @@ export default function CreateClubPage() {
         setError(null);
 
         try {
-            const result = await createClub({
+            // Build club data, omitting undefined/empty optional fields
+            const clubData: any = {
                 name: formData.name,
-                description: formData.description || undefined,
                 isPublic: formData.isPublic,
                 requiresApproval: formData.requiresApproval,
-                location: formData.city || formData.state ? {
-                    city: formData.city || undefined,
-                    state: formData.state || undefined
-                } : undefined,
-                propertyAcres: formData.propertyAcres ? parseInt(formData.propertyAcres) : undefined,
-                tags: formData.tags ? formData.tags.split(',').map(t => t.trim()).filter(Boolean) : undefined,
-                allowGuests: formData.allowGuests,
-                guestPolicy: formData.guestPolicy || undefined,
-                maxMembers: formData.maxMembers ? parseInt(formData.maxMembers) : undefined
-            });
+                allowGuests: formData.allowGuests
+            };
+
+            // Add optional fields only if they have values
+            if (formData.description?.trim()) {
+                clubData.description = formData.description.trim();
+            }
+
+            // Add location only if city or state provided
+            if (formData.city?.trim() || formData.state?.trim()) {
+                clubData.location = {};
+                if (formData.city?.trim()) clubData.location.city = formData.city.trim();
+                if (formData.state?.trim()) clubData.location.state = formData.state.trim();
+            }
+
+            // Add property acres if provided
+            if (formData.propertyAcres) {
+                const acres = parseInt(formData.propertyAcres);
+                if (!isNaN(acres)) clubData.propertyAcres = acres;
+            }
+
+            // Add tags if provided
+            if (formData.tags?.trim()) {
+                const tagList = formData.tags.split(',').map(t => t.trim()).filter(Boolean);
+                if (tagList.length > 0) clubData.tags = tagList;
+            }
+
+            // Add guest policy if guests are allowed and policy provided
+            if (formData.allowGuests && formData.guestPolicy?.trim()) {
+                clubData.guestPolicy = formData.guestPolicy.trim();
+            }
+
+            // Add max members if provided
+            if (formData.maxMembers) {
+                const max = parseInt(formData.maxMembers);
+                if (!isNaN(max)) clubData.maxMembers = max;
+            }
+
+            const result = await createClub(clubData);
 
             if (result.success) {
                 navigate('/');
