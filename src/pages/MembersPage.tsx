@@ -5,18 +5,18 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useAllMembers } from '../hooks/useMembers';
 import MemberCard from '../components/MemberCard';
-import { searchMembers, getMemberStats, canInviteMembers, canEditMember, canPromoteUser } from '../utils/memberHelpers';
-import type { UserRole, MemberStatus } from '../types';
+import { searchMembers, getMemberStats, canInviteMembers, canEditMemberProfile, canPromoteMember } from '../utils/memberHelpers';
+import type { UserRole, MemberStatus, ClubMembership } from '../types';
 
 export default function MembersPage() {
     const navigate = useNavigate();
-    const { user, profile } = useAuth();
+    const { user, activeClubId, activeMembership } = useAuth();
     const [searchTerm, setSearchTerm] = useState('');
     const [roleFilter, setRoleFilter] = useState<UserRole | 'all'>('all');
     const [statusFilter, setStatusFilter] = useState<MemberStatus | 'all'>('all');
 
     // Fetch members
-    const { members, loading, error } = useAllMembers(profile?.clubId || '');
+    const { members, loading, error } = useAllMembers(activeClubId || '');
 
     // Filter members
     let filteredMembers = members;
@@ -40,7 +40,7 @@ export default function MembersPage() {
     const stats = getMemberStats(members);
 
     // Check permissions
-    const canInvite = profile ? canInviteMembers(profile.role) : false;
+    const canInvite = activeMembership ? canInviteMembers(activeMembership.role) : false;
 
     if (loading) {
         return (
@@ -236,23 +236,39 @@ export default function MembersPage() {
                     transition={{ delay: 0.3 }}
                     className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
                 >
-                    {filteredMembers.map((member, index) => (
-                        <motion.div
-                            key={member.uid}
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.05 * index }}
-                        >
-                            <MemberCard
-                                member={member}
-                                onView={() => navigate(`/members/${member.uid}`)}
-                                onEdit={() => navigate(`/members/${member.uid}/edit`)}
-                                canEdit={user ? canEditMember(member, user.uid, profile?.role || 'member') : false}
-                                canPromote={profile ? canPromoteUser(member, profile.role) : false}
-                                canSuspend={profile ? (profile.role === 'owner' || profile.role === 'manager') && member.role !== 'owner' : false}
-                            />
-                        </motion.div>
-                    ))}
+                    {filteredMembers.map((member, index) => {
+                        // Create ClubMembership object for permission checks
+                        const membershipData: ClubMembership = {
+                            id: '',
+                            userId: member.uid,
+                            clubId: activeClubId || '',
+                            role: member.role,
+                            membershipStatus: member.membershipStatus || 'active',
+                            approvalStatus: member.approvalStatus || 'approved',
+                            duesStatus: member.duesStatus || 'paid',
+                            membershipTier: member.membershipTier || 'standard',
+                            joinDate: member.joinDate || new Date().toISOString(),
+                            createdAt: member.createdAt || new Date().toISOString()
+                        };
+
+                        return (
+                            <motion.div
+                                key={member.uid}
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.05 * index }}
+                            >
+                                <MemberCard
+                                    member={member}
+                                    onView={() => navigate(`/members/${member.uid}`)}
+                                    onEdit={() => navigate(`/members/${member.uid}/edit`)}
+                                    canEdit={user && activeMembership ? canEditMemberProfile(member.uid, user.uid, activeMembership.role) : false}
+                                    canPromote={activeMembership ? canPromoteMember(membershipData, activeMembership.role) : false}
+                                    canSuspend={activeMembership ? (activeMembership.role === 'owner' || activeMembership.role === 'manager') && member.role !== 'owner' : false}
+                                />
+                            </motion.div>
+                        );
+                    })}
                 </motion.div>
             )}
         </div>

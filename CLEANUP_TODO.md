@@ -74,16 +74,24 @@ export function canPromoteUser(member: UserProfile, currentUserRole: UserRole): 
 
 ---
 
-### 3. MembersPage and MemberCard Components
+### ~~3. MembersPage and MemberCard Components~~ ✅ FIXED
 **Files:**
-- `src/pages/MembersPage.tsx`
-- `src/components/MemberCard.tsx`
+- `src/pages/MembersPage.tsx` (UPDATED)
+- `src/components/MemberCard.tsx` (NO CHANGES NEEDED)
 
-**Likely Issue:** These components probably expect `UserProfile` with `role` field, but now need to work with merged data from `ClubMembership`.
+**Status:** Fixed all deprecated field usage in MembersPage
 
-**Audit Needed:**
-- Check if `useMembers()` hook already returns merged data
-- Update components to use `membership.role` instead of `member.role`
+**Changes Made:**
+1. **Updated imports** - Changed from deprecated helpers to new ClubMembership-based helpers
+2. **Updated useAuth destructuring** - Now uses `activeClubId` and `activeMembership` instead of `profile`
+3. **Fixed useAllMembers call** - Uses `activeClubId` instead of `profile?.clubId`
+4. **Fixed permission checks** - Uses `activeMembership.role` instead of `profile.role`
+5. **Fixed MemberCard props** - Creates ClubMembership object for permission helper functions
+
+**MemberCard Audit:**
+- ✅ Component works correctly - `member.role` comes from merged ClubMembership data
+- ✅ All role references use the merged data from `useMembers` hook
+- ✅ No changes needed - hook already merges ClubMembership data (lines 68-80 in useMembers.ts)
 
 ---
 
@@ -332,7 +340,7 @@ npm install -D vitest @testing-library/react @testing-library/jest-dom
 ## 🎯 **Priority Order for Remaining Tasks**
 
 1. **🟡 HIGH PRIORITY (This Week):**
-   - [ ] Audit MembersPage and MemberCard for deprecated field usage
+   - [x] Audit MembersPage and MemberCard for deprecated field usage
    - [ ] Test multi-club functionality thoroughly
    - [ ] Deploy Firestore security rules
    - [ ] Run data migration script
@@ -365,5 +373,5 @@ Before deploying multi-club to production:
 
 ---
 
-**Last Updated:** 2026-01-12
+**Last Updated:** 2026-01-12 (Evening - MembersPage audit complete)
 **Status:** Active cleanup backlog
