@@ -288,19 +288,91 @@ export interface MapLayerSettings {
     selectedStandForRings?: string; // Stand ID to show rings around
 }
 
+export type WeaponType = 'rifle' | 'bow' | 'crossbow' | 'muzzleloader' | 'shotgun' | 'handgun';
+export type ShotPlacement = 'heart' | 'lungs' | 'double-lung' | 'liver' | 'gut' | 'neck' | 'head' | 'shoulder' | 'quartering';
+
 export interface Harvest {
     id: string;
     clubId: string;            // Club where harvest occurred
     userId: string;
     userName: string;
     date: string;
-    species: 'deer' | 'turkey' | 'pigs' | 'other';
+    species: 'deer' | 'turkey' | 'hog' | 'bear' | 'elk' | 'other';
     sex?: 'male' | 'female';
-    weight?: number;
-    photoUrl?: string;
+
+    // Basic Weight Data
+    weight?: number;           // Live weight (lbs)
+    dressedWeight?: number;    // Field dressed weight (lbs)
+
+    // Photos
+    photoUrl?: string;         // DEPRECATED: Use photos array
+    photos?: string[];         // Multiple photos
+
+    // Location
     standId?: string;
+    standName?: string;        // Cached for display
+    lat?: number;
+    lng?: number;              // GPS coordinates
+
+    // Hunt Details
+    weaponType?: WeaponType;
+    distance?: number;         // Shot distance in yards
+    shotPlacement?: ShotPlacement;
+    timeOfDay?: 'morning' | 'midday' | 'evening' | 'night';
+    weather?: {
+        temp?: number;         // Fahrenheit
+        windSpeed?: number;    // mph
+        windDirection?: WindDirection;
+        conditions?: string;   // Sunny, cloudy, rainy, etc.
+    };
+
+    // Deer-Specific Measurements
+    deerData?: {
+        points?: number;       // Antler points
+        spread?: number;       // Inside spread (inches)
+        mainBeamLength?: number;  // Longest main beam (inches)
+        baseCircumference?: number; // Base circumference (inches)
+        grossScore?: number;   // Gross B&C or P&Y score
+        netScore?: number;     // Net score after deductions
+        estimatedAge?: number; // Age in years (from teeth/body)
+        antlerPhoto?: string;  // Close-up of antlers
+    };
+
+    // Turkey-Specific Measurements
+    turkeyData?: {
+        beardLength?: number;  // Beard length (inches)
+        spurLength?: number;   // Longest spur (inches)
+        weight?: number;       // Weight (lbs)
+        estimatedAge?: number; // Age in years
+    };
+
+    // Hog-Specific Measurements
+    hogData?: {
+        tuskLength?: number;   // Longest tusk (inches)
+        estimatedAge?: number;
+    };
+
+    // Legal/Compliance
+    tagNumber?: string;        // Hunting tag/permit number
+    harvestReported?: boolean; // Reported to state wildlife agency
+    reportDate?: string;
+
+    // Processing
+    processingNotes?: string;  // Butchering notes
+    mountType?: 'shoulder' | 'european' | 'full-body' | 'none';
+    taxidermist?: string;
+
+    // General Notes
     notes?: string;
+    story?: string;            // Detailed hunt story
+
+    // Audit
     createdAt?: string;
+    updatedAt?: string;
+
+    // Club Records
+    isClubRecord?: boolean;    // Flagged as club record
+    recordCategory?: string;   // "Biggest Buck", "Heaviest Deer", etc.
 }
 
 export type BookingStatus = 'confirmed' | 'checked-in' | 'completed' | 'cancelled' | 'no-show';
