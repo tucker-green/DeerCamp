@@ -70,7 +70,7 @@ export default function CreatePostModal({ onClose, onPostCreated }: CreatePostMo
           'state_changed',
           (snapshot) => {
             const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-            setUploadProgress(prev => {
+            setUploadProgress(() => {
               const perFileProgress = 100 / selectedFiles.length;
               return (index * perFileProgress) + (progress / selectedFiles.length);
             });
