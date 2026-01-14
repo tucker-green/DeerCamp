@@ -15,6 +15,7 @@ import PropertyManagementPage from './pages/PropertyManagementPage';
 import CreateClubPage from './pages/CreateClubPage';
 import ClubDiscoveryPage from './pages/ClubDiscoveryPage';
 import TrophyBookPage from './pages/TrophyBookPage';
+import CheckInOutPage from './pages/CheckInOutPage';
 import Navbar from './components/Navbar';
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -42,6 +43,7 @@ function App() {
                         <Route path="/feed" element={<FeedPage />} />
                         <Route path="/harvests" element={<HarvestPage />} />
                         <Route path="/trophy-book" element={<TrophyBookPage />} />
+                        <Route path="/check-in" element={<CheckInOutPage />} />
                         <Route path="/stands" element={<StandsPage />} />
                         <Route path="/map" element={<MapPage />} />
                         <Route path="/bookings" element={<BookingsPage />} />
