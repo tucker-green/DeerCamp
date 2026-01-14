@@ -77,8 +77,10 @@ service cloud.firestore {
     // Managers can update member roles/status
     // Owners can delete memberships (remove members)
     match /clubMemberships/{membershipId} {
+      // Allow reading own memberships or memberships from clubs you're in
       allow read: if isAuthenticated() &&
-        isMember(resource.data.clubId);
+        (resource.data.userId == request.auth.uid ||
+         isMember(resource.data.clubId));
 
       // Can create if: creating own membership OR manager adding member OR creating owner membership for your club
       allow create: if isAuthenticated() &&
@@ -224,6 +226,88 @@ service cloud.firestore {
         isManagerOrOwner(request.resource.data.clubId);
       allow update, delete: if isAuthenticated() &&
         isManagerOrOwner(resource.data.clubId);
+    }
+
+    // ===== PHASE 5: ACTIVITY FEED & COMMUNICATION =====
+
+    // POSTS - Members can read posts from their clubs
+    // Members can create posts
+    // Members can edit/delete their own posts
+    // Managers can pin/unpin announcements
+    match /posts/{postId} {
+      allow read: if isAuthenticated() && isMember(resource.data.clubId);
+
+      allow create: if isAuthenticated() &&
+        request.resource.data.userId == request.auth.uid &&
+        isMember(request.resource.data.clubId) &&
+        // Only managers can create announcements
+        (request.resource.data.type != 'announcement' ||
+         isManagerOrOwner(request.resource.data.clubId));
+
+      allow update: if isAuthenticated() &&
+        (resource.data.userId == request.auth.uid ||
+         // Managers can pin/unpin any post
+         isManagerOrOwner(resource.data.clubId));
+
+      allow delete: if isAuthenticated() &&
+        (resource.data.userId == request.auth.uid ||
+         isManagerOrOwner(resource.data.clubId));
+    }
+
+    // COMMENTS - Members can read comments from their clubs
+    // Members can create/edit/delete their own comments
+    match /comments/{commentId} {
+      allow read: if isAuthenticated() && isMember(resource.data.clubId);
+
+      allow create: if isAuthenticated() &&
+        request.resource.data.userId == request.auth.uid &&
+        isMember(request.resource.data.clubId);
+
+      allow update, delete: if isAuthenticated() &&
+        resource.data.userId == request.auth.uid;
+    }
+
+    // REACTIONS - Members can read/create/delete reactions
+    // Users can only manage their own reactions
+    match /reactions/{reactionId} {
+      allow read: if isAuthenticated() && isMember(resource.data.clubId);
+
+      allow create: if isAuthenticated() &&
+        request.resource.data.userId == request.auth.uid &&
+        isMember(request.resource.data.clubId);
+
+      allow delete: if isAuthenticated() &&
+        resource.data.userId == request.auth.uid;
+    }
+
+    // EVENTS - Members can read events from their clubs
+    // Managers can create/update/delete events
+    match /events/{eventId} {
+      allow read: if isAuthenticated() && isMember(resource.data.clubId);
+
+      allow create: if isAuthenticated() &&
+        request.resource.data.createdBy == request.auth.uid &&
+        isManagerOrOwner(request.resource.data.clubId);
+
+      allow update, delete: if isAuthenticated() &&
+        (resource.data.createdBy == request.auth.uid ||
+         isManagerOrOwner(resource.data.clubId));
+    }
+
+    // EVENT RSVPs - Members can read/create/update their own RSVPs
+    match /eventRSVPs/{rsvpId} {
+      allow read: if isAuthenticated() && isMember(resource.data.clubId);
+
+      allow create: if isAuthenticated() &&
+        request.resource.data.userId == request.auth.uid &&
+        isMember(request.resource.data.clubId);
+
+      allow update: if isAuthenticated() &&
+        resource.data.userId == request.auth.uid;
+
+      allow delete: if isAuthenticated() &&
+        (resource.data.userId == request.auth.uid ||
+         isManagerOrOwner(resource.data.clubId));
     }
 
     // ===== DEFAULT DENY =====

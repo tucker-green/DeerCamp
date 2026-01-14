@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { AuthProvider, useAuth } from './context/AuthContext';
 import LoginPage from './pages/LoginPage';
 import Dashboard from './pages/Dashboard';
+import FeedPage from './pages/FeedPage';
 import HarvestPage from './pages/HarvestPage';
 import StandsPage from './pages/StandsPage';
 import BookingsPage from './pages/BookingsPage';
@@ -38,6 +39,7 @@ function App() {
                     <main className="container mx-auto px-4 pt-24 pb-8">
                       <Routes>
                         <Route path="/" element={<Dashboard />} />
+                        <Route path="/feed" element={<FeedPage />} />
                         <Route path="/harvests" element={<HarvestPage />} />
                         <Route path="/trophy-book" element={<TrophyBookPage />} />
                         <Route path="/stands" element={<StandsPage />} />

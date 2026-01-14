@@ -62,7 +62,7 @@ const HarvestPage = () => {
                 photoUrl = await getDownloadURL(snapshot.ref);
             }
 
-            await addDoc(collection(db, 'harvests'), {
+            const harvestDoc = await addDoc(collection(db, 'harvests'), {
                 clubId: activeClubId,
                 userId: user.uid,
                 userName: profile?.displayName || 'Hunter',
@@ -73,6 +73,45 @@ const HarvestPage = () => {
                 notes: formData.notes,
                 photoUrl,
             });
+
+            // Auto-create feed post for harvest
+            const speciesEmoji = formData.species === 'deer' ? '🦌' :
+                                formData.species === 'turkey' ? '🦃' :
+                                formData.species === 'hog' ? '🐗' : '🎯';
+
+            const postContent = `${speciesEmoji} Just logged a ${formData.sex} ${formData.species}!${
+                formData.weight ? `\nWeight: ${formData.weight} lbs` : ''
+            }${formData.notes ? `\n\n${formData.notes}` : ''}`;
+
+            const harvestPostData: any = {
+                clubId: activeClubId,
+                userId: user.uid,
+                userName: profile?.displayName || 'Hunter',
+                type: 'harvest',
+                content: postContent,
+                harvestId: harvestDoc.id,
+                isPinned: false,
+                commentCount: 0,
+                reactions: {
+                    '👍': 0,
+                    '❤️': 0,
+                    '🔥': 0,
+                    '🦌': 0,
+                    '🎯': 0,
+                    '💯': 0
+                },
+                createdAt: new Date().toISOString()
+            };
+
+            // Only add optional fields if they have values
+            if (profile?.avatar) {
+                harvestPostData.userAvatar = profile.avatar;
+            }
+            if (photoUrl) {
+                harvestPostData.photos = [photoUrl];
+            }
+
+            await addDoc(collection(db, 'posts'), harvestPostData);
 
             setShowAddModal(false);
             setFormData({ species: 'deer', sex: 'male', weight: '', notes: '' });

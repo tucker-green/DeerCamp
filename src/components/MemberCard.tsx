@@ -1,12 +1,12 @@
 import { motion } from 'framer-motion';
 import { Mail, Phone, MoreVertical, Eye, Edit, UserMinus, TrendingUp, TrendingDown } from 'lucide-react';
 import { useState } from 'react';
-import type { UserProfile } from '../types';
+import type { MemberWithClubData } from '../types';
 import { RoleBadge, MembershipTierBadge, DuesStatusBadge, MemberStatusBadge } from './MemberBadges';
 import { formatMemberSince } from '../utils/memberHelpers';
 
 interface MemberCardProps {
-    member: UserProfile;
+    member: MemberWithClubData;
     onView?: () => void;
     onEdit?: () => void;
     onPromote?: () => void;

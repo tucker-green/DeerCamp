@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { collection, query, where, onSnapshot, doc, updateDoc, deleteDoc, getDocs, orderBy, getDoc } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import { useAuth } from '../context/AuthContext';
-import type { UserProfile, UserRole, MemberStatus, DuesStatus, MembershipTier, ClubMembership } from '../types';
+import type { UserProfile, MemberWithClubData, UserRole, MemberStatus, DuesStatus, MembershipTier, ClubMembership } from '../types';
 import { calculateProfileCompleteness } from '../utils/memberHelpers';
 
 interface UseMembersOptions {
@@ -14,7 +14,7 @@ interface UseMembersOptions {
 
 export function useMembers(options: UseMembersOptions = {}) {
     const { activeClubId } = useAuth();
-    const [members, setMembers] = useState<UserProfile[]>([]);
+    const [members, setMembers] = useState<MemberWithClubData[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
@@ -60,7 +60,7 @@ export function useMembers(options: UseMembersOptions = {}) {
                     }
 
                     // Fetch user profiles for each membership
-                    const memberProfiles: UserProfile[] = [];
+                    const memberProfiles: MemberWithClubData[] = [];
                     for (const membership of filteredMemberships) {
                         const userDoc = await getDoc(doc(db, 'users', membership.userId));
                         if (userDoc.exists()) {

@@ -121,6 +121,20 @@ export interface ClubMembership {
     updatedAt?: string;
 }
 
+// Member with club-specific data (for display in member lists)
+// This combines UserProfile with ClubMembership properties for convenience
+export interface MemberWithClubData extends UserProfile {
+    role: UserRole;
+    membershipTier: MembershipTier;
+    membershipStatus: MemberStatus;
+    approvalStatus: ApprovalStatus;
+    duesStatus?: DuesStatus;
+    duesPaidUntil?: string;
+    lastDuesPayment?: string;
+    invitedBy?: string;
+    approvedBy?: string;
+}
+
 // Club Join Request (for public clubs requiring approval)
 export type JoinRequestStatus = 'pending' | 'approved' | 'rejected' | 'cancelled';
 
@@ -421,4 +435,127 @@ export interface Invite {
 
     // Invite Code
     inviteCode: string;        // unique 8-char code
+}
+
+// ==================== PHASE 5: ACTIVITY FEED & COMMUNICATION ====================
+
+export type PostType = 'text' | 'harvest' | 'announcement' | 'event';
+export type ReactionType = '👍' | '❤️' | '🔥' | '🦌' | '🎯' | '💯';
+export type RSVPStatus = 'going' | 'maybe' | 'not-going';
+
+// Post (feed item)
+export interface Post {
+    id: string;
+    clubId: string;
+    userId: string;
+    userName: string;          // Cached for display
+    userAvatar?: string;       // Cached for display
+    type: PostType;
+
+    // Content
+    content: string;
+    photos?: string[];
+
+    // Links to other entities
+    harvestId?: string;        // If type === 'harvest'
+    eventId?: string;          // If type === 'event'
+
+    // Announcement-specific
+    isPinned?: boolean;        // Only for announcements
+    pinnedUntil?: string;      // Auto-unpin after date
+
+    // Engagement
+    commentCount: number;
+    reactions: Record<ReactionType, number>; // Count of each reaction type
+
+    // Audit
+    createdAt: string;
+    updatedAt?: string;
+    editedAt?: string;         // Show "edited" badge if present
+}
+
+// Comment on a post
+export interface Comment {
+    id: string;
+    postId: string;
+    clubId: string;
+    userId: string;
+    userName: string;          // Cached for display
+    userAvatar?: string;       // Cached for display
+
+    // Content
+    content: string;
+
+    // Replies (nested comments)
+    parentCommentId?: string;  // If replying to another comment
+    replyCount: number;
+
+    // Engagement
+    reactions: Record<ReactionType, number>;
+
+    // Audit
+    createdAt: string;
+    updatedAt?: string;
+    editedAt?: string;
+}
+
+// Reaction to a post or comment
+export interface Reaction {
+    id: string;
+    targetType: 'post' | 'comment';
+    targetId: string;          // postId or commentId
+    clubId: string;
+    userId: string;
+    userName: string;          // Cached for display
+    reactionType: ReactionType;
+    createdAt: string;
+}
+
+// Event (club gathering, work day, etc.)
+export interface Event {
+    id: string;
+    clubId: string;
+
+    // Created by
+    createdBy: string;         // userId
+    createdByName: string;     // Cached for display
+
+    // Event details
+    title: string;
+    description?: string;
+    location?: string;
+
+    // Timing
+    startTime: string;         // ISO string
+    endTime: string;           // ISO string
+    allDay: boolean;
+
+    // RSVP tracking
+    rsvpEnabled: boolean;
+    maxAttendees?: number;     // Capacity limit
+    goingCount: number;
+    maybeCount: number;
+    notGoingCount: number;
+
+    // Visibility
+    isPublic: boolean;         // Visible to non-members?
+
+    // Audit
+    createdAt: string;
+    updatedAt?: string;
+    cancelledAt?: string;
+    cancellationReason?: string;
+}
+
+// RSVP to an event
+export interface EventRSVP {
+    id: string;
+    eventId: string;
+    clubId: string;
+    userId: string;
+    userName: string;          // Cached for display
+    status: RSVPStatus;
+    note?: string;             // Optional message with RSVP
+    createdAt: string;
+    updatedAt?: string;
 }

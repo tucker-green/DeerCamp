@@ -18,6 +18,22 @@ service firebase.storage {
       return request.resource.size < 5 * 1024 * 1024;
     }
 
+    // Helper function to check if file is a video
+    function isVideo() {
+      return request.resource.contentType.matches('video/.*');
+    }
+
+    // Helper function to check if file is image or video
+    function isImageOrVideo() {
+      return isImage() || isVideo();
+    }
+
+    // Helper function to check file size for posts (max 50MB for videos, 10MB for images)
+    function isValidPostFileSize() {
+      return (isImage() && request.resource.size < 10 * 1024 * 1024) ||
+             (isVideo() && request.resource.size < 50 * 1024 * 1024);
+    }
+
     // Harvest photos
     // Path format: harvests/{userId}/{fileName}
     // - All authenticated users can read any harvest photo
@@ -30,6 +46,21 @@ service firebase.storage {
         request.auth.uid == userId &&
         isImage() &&
         isUnder5MB();
+      allow delete: if isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // Post photos and videos
+    // Path format: posts/{clubId}/{userId}/{fileName}
+    // - All authenticated users can read post media
+    // - Users can upload photos/videos to their own folder
+    // - Media must be images (max 10MB) or videos (max 50MB)
+    // - Users can delete their own media
+    match /posts/{clubId}/{userId}/{fileName} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() &&
+        request.auth.uid == userId &&
+        isImageOrVideo() &&
+        isValidPostFileSize();
       allow delete: if isAuthenticated() && request.auth.uid == userId;
     }
 

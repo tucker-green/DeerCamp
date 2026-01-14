@@ -1,4 +1,4 @@
-import type { UserProfile, UserRole, MembershipTier, DuesStatus, MemberStatus, ClubMembership } from '../types';
+import type { UserProfile, MemberWithClubData, UserRole, MembershipTier, DuesStatus, MemberStatus, ClubMembership } from '../types';
 
 // ==================== VALIDATION ====================
 
@@ -99,21 +99,21 @@ export function canInviteMembers(currentUserRole: UserRole): boolean {
 // Use the ClubMembership-based versions above for new code
 
 /** @deprecated Use canPromoteMember(membership, currentUserRole) instead */
-export function canPromoteUser(member: UserProfile, currentUserRole: UserRole): boolean {
+export function canPromoteUser(member: MemberWithClubData, currentUserRole: UserRole): boolean {
     if (currentUserRole !== 'owner') return false;
     if (member.role === 'owner') return false;
     return true;
 }
 
 /** @deprecated Use canDemoteMember(membership, currentUserRole) instead */
-export function canDemoteUser(member: UserProfile, currentUserRole: UserRole): boolean {
+export function canDemoteUser(member: MemberWithClubData, currentUserRole: UserRole): boolean {
     if (currentUserRole !== 'owner') return false;
     if (member.role === 'owner') return false;
     return true;
 }
 
 /** @deprecated Use canSuspendMember(membership, currentUserRole) instead */
-export function canSuspendUser(member: UserProfile, currentUserRole: UserRole): boolean {
+export function canSuspendUser(member: MemberWithClubData, currentUserRole: UserRole): boolean {
     if (currentUserRole !== 'owner' && currentUserRole !== 'manager') return false;
     if (member.role === 'owner') return false;
     if (member.membershipStatus === 'suspended') return false;
@@ -122,7 +122,7 @@ export function canSuspendUser(member: UserProfile, currentUserRole: UserRole): 
 
 /** @deprecated Use canEditMemberProfile(userId, currentUserId, currentUserRole) instead */
 export function canEditMember(
-    member: UserProfile,
+    member: MemberWithClubData,
     currentUserId: string,
     currentUserRole: UserRole
 ): boolean {
@@ -132,7 +132,7 @@ export function canEditMember(
 }
 
 /** @deprecated Use canRemoveMember(membership, currentUserRole) instead */
-export function canDeleteMember(member: UserProfile, currentUserRole: UserRole): boolean {
+export function canDeleteMember(member: MemberWithClubData, currentUserRole: UserRole): boolean {
     if (currentUserRole !== 'owner') return false;
     if (member.role === 'owner') return false;
     return true;
@@ -327,7 +327,7 @@ export function formatPhoneNumber(phone: string): string {
 
 // ==================== SEARCH & FILTER ====================
 
-export function searchMembers(members: UserProfile[], searchTerm: string): UserProfile[] {
+export function searchMembers(members: MemberWithClubData[], searchTerm: string): MemberWithClubData[] {
     if (!searchTerm.trim()) return members;
 
     const term = searchTerm.toLowerCase();
@@ -339,24 +339,24 @@ export function searchMembers(members: UserProfile[], searchTerm: string): UserP
     );
 }
 
-export function filterMembersByRole(members: UserProfile[], role?: UserRole): UserProfile[] {
+export function filterMembersByRole(members: MemberWithClubData[], role?: UserRole): MemberWithClubData[] {
     if (!role) return members;
     return members.filter(member => member.role === role);
 }
 
-export function filterMembersByStatus(members: UserProfile[], status?: MemberStatus): UserProfile[] {
+export function filterMembersByStatus(members: MemberWithClubData[], status?: MemberStatus): MemberWithClubData[] {
     if (!status) return members;
     return members.filter(member => member.membershipStatus === status);
 }
 
-export function filterMembersByDuesStatus(members: UserProfile[], duesStatus?: DuesStatus): UserProfile[] {
+export function filterMembersByDuesStatus(members: MemberWithClubData[], duesStatus?: DuesStatus): MemberWithClubData[] {
     if (!duesStatus) return members;
     return members.filter(member => member.duesStatus === duesStatus);
 }
 
 // ==================== STATS ====================
 
-export function getMemberStats(members: UserProfile[]): {
+export function getMemberStats(members: MemberWithClubData[]): {
     total: number;
     active: number;
     inactive: number;
