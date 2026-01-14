@@ -1,0 +1,28 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="512" height="512" rx="64" fill="#16a34a"/>
+
+  <!-- Deer antler left -->
+  <path d="M180 150 L160 100 L140 110 M160 100 L150 70 M160 100 L180 80" stroke="#f0fdf4" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- Deer antler right -->
+  <path d="M332 150 L352 100 L372 110 M352 100 L362 70 M352 100 L332 80" stroke="#f0fdf4" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- Deer head -->
+  <ellipse cx="256" cy="200" rx="80" ry="90" fill="#f0fdf4"/>
+
+  <!-- Ears -->
+  <ellipse cx="200" cy="160" rx="25" ry="35" fill="#f0fdf4"/>
+  <ellipse cx="312" cy="160" rx="25" ry="35" fill="#f0fdf4"/>
+
+  <!-- Eyes -->
+  <circle cx="230" cy="190" r="8" fill="#0a0f0a"/>
+  <circle cx="282" cy="190" r="8" fill="#0a0f0a"/>
+
+  <!-- Nose -->
+  <path d="M256 220 L246 230 L256 235 L266 230 Z" fill="#0a0f0a"/>
+
+  <!-- Tree silhouette -->
+  <path d="M256 300 L200 380 L230 380 L220 420 L292 420 L282 380 L312 380 Z" fill="#f0fdf4" opacity="0.7"/>
+  <rect x="246" y="420" width="20" height="50" fill="#f0fdf4" opacity="0.7"/>
+</svg>
