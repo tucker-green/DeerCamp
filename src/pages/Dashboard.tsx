@@ -22,9 +22,13 @@ const Dashboard = () => {
 
     // Hide loading screen after initial data fetch
     useEffect(() => {
+        // If we have an active club ID, wait a bit for data to potentially load
         if (activeClubId) {
             const timer = setTimeout(() => setLoading(false), 1500);
             return () => clearTimeout(timer);
+        } else {
+            // If no active club (e.g. new user), stop loading immediately
+            setLoading(false);
         }
     }, [activeClubId]);
 
