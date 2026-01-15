@@ -10,6 +10,12 @@ service cloud.firestore {
       return request.auth != null;
     }
 
+    // Check if user is a system-wide super admin
+    function isSuperAdmin() {
+      return isAuthenticated() &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isSuperAdmin == true;
+    }
+
     // Get user's membership for a specific club
     function getMembership(clubId) {
       return exists(/databases/$(database)/documents/clubMemberships/$(clubId + '_' + request.auth.uid));
@@ -51,11 +57,11 @@ service cloud.firestore {
     match /users/{userId} {
       allow read: if isAuthenticated();
       allow create: if isAuthenticated() && request.auth.uid == userId;
-      allow update: if isAuthenticated() && request.auth.uid == userId &&
-        // Prevent users from directly modifying clubIds or activeClubId
-        (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['clubIds', 'activeClubId']) ||
-         request.resource.data.clubIds == resource.data.clubIds);
-      allow delete: if false; // Users cannot delete themselves
+      allow update: if isAuthenticated() && (request.auth.uid == userId || isSuperAdmin()) &&
+        // Prevent regular users from directly modifying isSuperAdmin, isBanned
+        (isSuperAdmin() || 
+         !request.resource.data.diff(resource.data).affectedKeys().hasAny(['isSuperAdmin', 'isBanned']));
+      allow delete: if isSuperAdmin();
     }
 
     // ===== CLUBS COLLECTION =====
@@ -64,11 +70,11 @@ service cloud.firestore {
     // Anyone can create a club (they become owner)
     // Only owner can update or delete
     match /clubs/{clubId} {
-      allow read: if resource.data.isPublic == true || isMember(clubId);
+      allow read: if resource.data.isPublic == true || isMember(clubId) || isSuperAdmin();
       allow create: if isAuthenticated() &&
-        request.resource.data.ownerId == request.auth.uid;
-      allow update: if isClubOwner(clubId);
-      allow delete: if isClubOwner(clubId);
+        (request.resource.data.ownerId == request.auth.uid || isSuperAdmin());
+      allow update: if isClubOwner(clubId) || isSuperAdmin();
+      allow delete: if isClubOwner(clubId) || isSuperAdmin();
     }
 
     // ===== CLUB MEMBERSHIPS COLLECTION =====
@@ -246,8 +252,9 @@ service cloud.firestore {
 
       allow update: if isAuthenticated() &&
         (resource.data.userId == request.auth.uid ||
-         // Managers can pin/unpin any post
-         isManagerOrOwner(resource.data.clubId));
+         isManagerOrOwner(resource.data.clubId) ||
+         (isMember(resource.data.clubId) && 
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['commentCount', 'reactions'])));
 
       allow delete: if isAuthenticated() &&
         (resource.data.userId == request.auth.uid ||
@@ -308,6 +315,21 @@ service cloud.firestore {
       allow delete: if isAuthenticated() &&
         (resource.data.userId == request.auth.uid ||
          isManagerOrOwner(resource.data.clubId));
+    }
+
+    // REPORTS - Members can create reports
+    // Managers can read and update reports for their club
+    // Superadmins can manage all reports
+    match /reports/{reportId} {
+      allow read: if isAuthenticated() && (isManagerOrOwner(resource.data.clubId) || isSuperAdmin());
+      
+      allow create: if isAuthenticated() && 
+        request.resource.data.reporterId == request.auth.uid &&
+        (isMember(request.resource.data.clubId) || isSuperAdmin());
+        
+      allow update: if isAuthenticated() && (isManagerOrOwner(resource.data.clubId) || isSuperAdmin());
+      
+      allow delete: if isSuperAdmin();
     }
 
     // ===== DEFAULT DENY =====
