@@ -16,6 +16,8 @@ import ClubDiscoveryPage from './pages/ClubDiscoveryPage';
 import CheckInOutPage from './pages/CheckInOutPage';
 import AdminDashboard from './pages/AdminDashboard';
 import Navbar from './components/Navbar';
+import BottomTabBar from './components/BottomTabBar';
+import ProfilePage from './pages/ProfilePage';
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { user } = useAuth();
@@ -42,7 +44,7 @@ function App() {
                 <ProtectedRoute>
                   <>
                     <Navbar />
-                    <main className="container mx-auto px-4 pt-24 pb-8">
+                    <main className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 pt-16 sm:pt-24 pb-24 sm:pb-8">
                       <Routes>
                         <Route path="/" element={<Dashboard />} />
                         <Route path="/feed" element={<FeedPage />} />
@@ -52,6 +54,7 @@ function App() {
                         <Route path="/bookings" element={<BookingsPage />} />
                         <Route path="/bookings/new" element={<NewBookingPage />} />
                         <Route path="/bookings/mine" element={<MyBookingsPage />} />
+                        <Route path="/profile" element={<ProfilePage />} />
                         <Route path="/members/invite" element={<InviteMemberPage />} />
                         <Route path="/clubs/create" element={<CreateClubPage />} />
                         <Route path="/clubs/discover" element={<ClubDiscoveryPage />} />
@@ -65,6 +68,7 @@ function App() {
                         />
                       </Routes>
                     </main>
+                    <BottomTabBar />
                   </>
                 </ProtectedRoute>
               }

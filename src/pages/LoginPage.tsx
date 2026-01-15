@@ -84,7 +84,7 @@ const LoginPage = () => {
             <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-green-500/10 rounded-full blur-3xl animate-pulse" />
             <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
 
-            <div className="container mx-auto px-4 z-10 flex flex-col md:flex-row items-center justify-center md:justify-between gap-12 max-w-6xl">
+            <div className="container mx-auto px-4 z-10 flex flex-col md:flex-row items-center justify-center md:justify-between gap-8 sm:gap-12 max-w-6xl">
 
                 {/* Brand Section */}
                 <div className="text-center md:text-left text-white max-w-lg">
@@ -94,7 +94,7 @@ const LoginPage = () => {
                         transition={{ duration: 0.8, delay: 0.2 }}
                     >
                         <motion.h1
-                            className="text-6xl md:text-7xl lg:text-8xl font-heading font-bold mb-6 tracking-tight"
+                            className="text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-heading font-bold mb-4 sm:mb-6 tracking-tight"
                             initial={{ opacity: 0, scale: 0.9 }}
                             animate={{ opacity: 1, scale: 1 }}
                             transition={{ duration: 0.8, delay: 0.3 }}
@@ -106,7 +106,7 @@ const LoginPage = () => {
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ duration: 0.8, delay: 0.5 }}
-                            className="text-xl md:text-2xl text-gray-300 font-light mb-10 leading-relaxed"
+                            className="text-base sm:text-xl md:text-2xl text-gray-300 font-light mb-6 sm:mb-10 leading-relaxed"
                         >
                             The modern platform for the <span className="text-white font-semibold">serious hunting club</span>
                         </motion.p>
@@ -137,7 +137,7 @@ const LoginPage = () => {
                     transition={{ duration: 0.8, delay: 0.4, type: 'spring', stiffness: 100 }}
                     className="w-full max-w-md"
                 >
-                    <div className="glass-panel-strong p-8 md:p-10 rounded-3xl border border-white/20 shadow-2xl relative overflow-hidden hover:border-white/30 transition-all duration-500">
+                    <div className="glass-panel-strong p-6 sm:p-8 md:p-10 rounded-3xl border border-white/20 shadow-2xl relative overflow-hidden hover:border-white/30 transition-all duration-500">
                         {/* Decorative gradient blobs */}
                         <div className="absolute -top-20 -right-20 w-48 h-48 bg-gradient-to-br from-green-500/20 to-blue-500/20 rounded-full blur-3xl pointer-events-none animate-pulse" />
                         <div className="absolute -bottom-20 -left-20 w-48 h-48 bg-gradient-to-tr from-green-500/10 to-transparent rounded-full blur-3xl pointer-events-none" />
@@ -148,7 +148,7 @@ const LoginPage = () => {
                             transition={{ delay: 0.6 }}
                             className="mb-8 relative z-10"
                         >
-                            <h2 className="text-3xl font-bold font-heading text-white mb-2">
+                            <h2 className="text-2xl sm:text-3xl font-bold font-heading text-white mb-2">
                                 {isLogin ? 'Welcome back' : 'Join the club'}
                             </h2>
                             <p className="text-gray-400 text-sm">
@@ -156,7 +156,7 @@ const LoginPage = () => {
                             </p>
                         </motion.div>
 
-                        <form onSubmit={handleSubmit} className="space-y-6 relative z-10">
+                        <form onSubmit={handleSubmit} className="space-y-5 sm:space-y-6 relative z-10">
                             <motion.div
                                 initial={{ opacity: 0, x: -20 }}
                                 animate={{ opacity: 1, x: 0 }}
@@ -168,7 +168,7 @@ const LoginPage = () => {
                                     type="email"
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
-                                    className="w-full bg-black/50 border border-white/10 rounded-xl px-5 py-4 text-white placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-green-500/50 focus:border-green-500/50 transition-all hover:bg-black/60 hover:border-white/20"
+                                    className="w-full bg-black/50 border border-white/10 rounded-xl px-4 sm:px-5 py-3 sm:py-4 text-white placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-green-500/50 focus:border-green-500/50 transition-all hover:bg-black/60 hover:border-white/20"
                                     placeholder="hunter@example.com"
                                     required
                                 />
@@ -184,7 +184,7 @@ const LoginPage = () => {
                                     type="password"
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
-                                    className="w-full bg-black/50 border border-white/10 rounded-xl px-5 py-4 text-white placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-green-500/50 focus:border-green-500/50 transition-all hover:bg-black/60 hover:border-white/20"
+                                    className="w-full bg-black/50 border border-white/10 rounded-xl px-4 sm:px-5 py-3 sm:py-4 text-white placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-green-500/50 focus:border-green-500/50 transition-all hover:bg-black/60 hover:border-white/20"
                                     placeholder="••••••••"
                                     required
                                 />
@@ -208,7 +208,7 @@ const LoginPage = () => {
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: 0.9 }}
                                 type="submit"
-                                className="btn btn-primary w-full justify-center py-4 rounded-xl text-lg mt-4 group shadow-2xl shadow-green-900/30"
+                                className="btn btn-primary w-full justify-center py-3.5 sm:py-4 rounded-xl text-base sm:text-lg mt-4 group shadow-2xl shadow-green-900/30"
                             >
                                 {isLogin ? 'Sign In' : 'Create Account'}
                                 <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
@@ -219,7 +219,7 @@ const LoginPage = () => {
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             transition={{ delay: 1.0 }}
-                            className="mt-8 relative z-10"
+                            className="mt-6 sm:mt-8 relative z-10"
                         >
                             <div className="relative flex items-center py-5">
                                 <div className="flex-grow border-t border-white/10"></div>
@@ -231,7 +231,7 @@ const LoginPage = () => {
                                 whileHover={{ scale: 1.02, y: -2 }}
                                 whileTap={{ scale: 0.98 }}
                                 onClick={handleGoogleSignIn}
-                                className="w-full bg-white text-black btn font-bold flex justify-center hover:bg-gray-100 rounded-xl py-4 transition-all shadow-lg hover:shadow-xl relative overflow-hidden group"
+                                className="w-full bg-white text-black btn font-bold flex justify-center hover:bg-gray-100 rounded-xl py-3.5 sm:py-4 text-sm sm:text-base transition-all shadow-lg hover:shadow-xl relative overflow-hidden group"
                             >
                                 <div className="absolute inset-0 bg-gradient-to-r from-transparent via-gray-100/50 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
                                 <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" className="w-5 h-5 mr-2.5 relative z-10" alt="Google" />
@@ -243,7 +243,7 @@ const LoginPage = () => {
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             transition={{ delay: 1.1 }}
-                            className="mt-8 text-center text-sm text-gray-400 relative z-10"
+                            className="mt-6 sm:mt-8 text-center text-sm text-gray-400 relative z-10"
                         >
                             {isLogin ? "Don't have an account?" : "Already a member?"}{' '}
                             <motion.button

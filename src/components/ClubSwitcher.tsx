@@ -45,17 +45,17 @@ export default function ClubSwitcher() {
     // If no memberships, show simplified UI
     if (!memberships || memberships.length === 0) {
         return (
-            <div className="flex items-center gap-2">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
                 <button
                     onClick={handleCreateClub}
-                    className="flex items-center gap-2 px-4 py-2 rounded-full bg-green-500/10 hover:bg-green-500/20 text-green-400 text-sm font-medium transition-all border border-green-500/20"
+                    className="flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-green-500/10 hover:bg-green-500/20 text-green-400 text-xs sm:text-sm font-medium transition-all border border-green-500/20"
                 >
                     <Plus size={16} />
                     <span>Create Club</span>
                 </button>
                 <button
                     onClick={handleDiscoverClubs}
-                    className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 hover:bg-white/10 text-gray-300 text-sm font-medium transition-all border border-white/10"
+                    className="flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-white/5 hover:bg-white/10 text-gray-300 text-xs sm:text-sm font-medium transition-all border border-white/10"
                 >
                     <Search size={16} />
                     <span>Discover</span>
@@ -70,10 +70,10 @@ export default function ClubSwitcher() {
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={() => setIsOpen(!isOpen)}
-                className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 hover:bg-white/10 text-white border border-white/10 transition-all"
+                className="flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-white/5 hover:bg-white/10 text-white border border-white/10 transition-all"
             >
                 <Users size={16} className="text-green-400" />
-                <span className="text-sm font-medium max-w-[120px] md:max-w-[200px] truncate">
+                <span className="text-xs sm:text-sm font-medium max-w-[120px] md:max-w-[200px] truncate">
                     {activeClub?.name || 'Select Club'}
                 </span>
                 <ChevronDown

@@ -27,7 +27,7 @@ export default function NoClubSelected({
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
           transition={{ delay: 0.2, type: 'spring' }}
-          className="w-24 h-24 mx-auto mb-6 rounded-full bg-gradient-to-br from-gray-800 to-gray-900 flex items-center justify-center border border-white/10"
+          className="w-20 h-20 sm:w-24 sm:h-24 mx-auto mb-6 rounded-full bg-gradient-to-br from-gray-800 to-gray-900 flex items-center justify-center border border-white/10"
         >
           <Users size={40} className="text-gray-500" />
         </motion.div>
@@ -37,7 +37,7 @@ export default function NoClubSelected({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.3 }}
-          className="text-3xl font-heading font-bold text-white mb-3"
+          className="text-2xl sm:text-3xl font-heading font-bold text-white mb-3"
         >
           {title}
         </motion.h2>
@@ -47,7 +47,7 @@ export default function NoClubSelected({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.4 }}
-          className="text-gray-400 mb-8 text-lg"
+          className="text-gray-400 mb-8 text-base sm:text-lg"
         >
           {message}
         </motion.p>
@@ -64,7 +64,7 @@ export default function NoClubSelected({
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => navigate('/clubs/discover')}
-              className="flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-xl font-medium hover:from-green-500 hover:to-green-600 transition-all shadow-lg shadow-green-900/50"
+              className="flex items-center justify-center gap-2 px-5 sm:px-6 py-2.5 sm:py-3 text-sm sm:text-base bg-gradient-to-r from-green-600 to-green-700 text-white rounded-xl font-medium hover:from-green-500 hover:to-green-600 transition-all shadow-lg shadow-green-900/50"
             >
               <Users size={18} />
               Find a Club
@@ -75,7 +75,7 @@ export default function NoClubSelected({
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => navigate('/clubs/create')}
-              className="flex items-center justify-center gap-2 px-6 py-3 glass-panel-strong border border-white/10 text-white rounded-xl font-medium hover:bg-white/5 transition-all"
+              className="flex items-center justify-center gap-2 px-5 sm:px-6 py-2.5 sm:py-3 text-sm sm:text-base glass-panel-strong border border-white/10 text-white rounded-xl font-medium hover:bg-white/5 transition-all"
             >
               <Plus size={18} />
               Create a Club
