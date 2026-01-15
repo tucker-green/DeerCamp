@@ -110,84 +110,123 @@ const Navbar = () => {
             {/* Mobile Menu */}
             <AnimatePresence>
                 {mobileMenuOpen && (
-                    <>
-                        <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            transition={{ duration: 0.2 }}
-                            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 md:hidden"
-                            onClick={() => setMobileMenuOpen(false)}
-                        />
-                        <motion.div
-                            initial={{ x: '100%' }}
-                            animate={{ x: 0 }}
-                            exit={{ x: '100%' }}
-                            transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-                            className="fixed top-20 right-0 bottom-0 w-80 bg-[#141812]/95 backdrop-blur-2xl border-l border-white/10 z-50 md:hidden shadow-2xl"
-                        >
-                            <div className="p-6 space-y-6">
-                                {/* User Profile */}
-                                <div className="glass-panel p-5 rounded-2xl border border-white/10">
-                                    <div className="flex items-center gap-4">
-                                        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-green-500 to-green-700 flex items-center justify-center text-white font-bold text-lg shadow-lg">
-                                            {profile?.displayName?.charAt(0) || 'U'}
-                                        </div>
-                                        <div>
-                                            <p className="text-white font-bold">{profile?.displayName}</p>
-                                            <div className="flex items-center gap-2 mt-1">
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.3 }}
+                        className="fixed inset-0 z-[60] md:hidden h-screen w-screen overflow-hidden"
+                    >
+                        {/* Immersive Background */}
+                        <div className="absolute inset-0 bg-[#0a0c08]/98 backdrop-blur-3xl" />
+
+                        {/* Decorative Topographical/Nature Accents */}
+                        <div className="absolute inset-0 opacity-20 pointer-events-none">
+                            <div className="absolute top-[-10%] right-[-10%] w-[50%] h-[50%] bg-green-500/20 rounded-full blur-[120px]" />
+                            <div className="absolute bottom-[-10%] left-[-10%] w-[50%] h-[50%] bg-green-900/30 rounded-full blur-[120px]" />
+                            <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] mix-blend-overlay opacity-10" />
+                        </div>
+
+                        <div className="relative h-full flex flex-col pt-24 pb-10 px-6 overflow-y-auto">
+                            {/* Close Button Top Right */}
+                            <motion.button
+                                initial={{ opacity: 0, rotate: -90 }}
+                                animate={{ opacity: 1, rotate: 0 }}
+                                onClick={() => setMobileMenuOpen(false)}
+                                className="absolute top-6 right-6 w-12 h-12 flex items-center justify-center rounded-full bg-white/5 border border-white/10 text-white"
+                            >
+                                <X size={24} />
+                            </motion.button>
+
+                            {/* User Profile Section */}
+                            <motion.div
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.1 }}
+                                className="mb-10"
+                            >
+                                <div className="flex items-center gap-5 p-6 rounded-3xl bg-white/5 border border-white/10 backdrop-blur-md relative overflow-hidden group">
+                                    <div className="absolute inset-0 bg-gradient-to-br from-green-500/5 to-transparent pointer-events-none" />
+                                    <div className="relative w-16 h-16 rounded-2xl bg-gradient-to-br from-green-500 to-green-700 flex items-center justify-center text-white font-bold text-2xl shadow-2xl overflow-hidden">
+                                        {profile?.displayName?.charAt(0) || 'U'}
+                                        <div className="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors" />
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <h3 className="text-xl font-bold text-white truncate">{profile?.displayName}</h3>
+                                        <div className="flex items-center gap-3 mt-1.5">
+                                            <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-green-500/10 border border-green-500/20">
                                                 <span className="relative flex h-2 w-2">
                                                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
                                                     <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
                                                 </span>
-                                                <p className="text-xs text-green-400 font-semibold uppercase">{activeMembership?.role}</p>
+                                                <span className="text-[10px] text-green-400 font-bold uppercase tracking-widest">{activeMembership?.role}</span>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
+                            </motion.div>
 
-                                {/* Navigation Links */}
-                                <div className="space-y-2">
-                                    {navItems.map((item, index) => (
+                            {/* Staggered Navigation */}
+                            <nav className="flex-1 space-y-2 mb-10">
+                                {navItems.map((item, index) => {
+                                    const isActive = location.pathname === item.path;
+                                    return (
                                         <motion.button
                                             key={item.path}
-                                            initial={{ opacity: 0, x: 20 }}
+                                            initial={{ opacity: 0, x: -20 }}
                                             animate={{ opacity: 1, x: 0 }}
-                                            transition={{ delay: index * 0.1 }}
+                                            transition={{ delay: 0.2 + index * 0.05 }}
                                             onClick={() => {
                                                 navigate(item.path);
                                                 setMobileMenuOpen(false);
                                             }}
-                                            className={`w-full flex items-center gap-4 px-5 py-4 rounded-xl text-left font-medium transition-all duration-300 ${
-                                                location.pathname === item.path
-                                                    ? 'bg-gradient-to-r from-green-600 to-green-700 text-white shadow-lg shadow-green-900/40'
-                                                    : 'bg-white/5 text-gray-400 hover:text-white hover:bg-white/10'
-                                            }`}
+                                            className={`w-full flex items-center gap-4 p-4 rounded-2xl text-left transition-all duration-300 relative group overflow-hidden ${isActive
+                                                    ? 'text-white'
+                                                    : 'text-gray-400 hover:text-white'
+                                                }`}
                                         >
-                                            <span className={location.pathname === item.path ? 'text-white' : 'text-gray-500'}>
+                                            {isActive && (
+                                                <motion.div
+                                                    layoutId="mobileActiveItem"
+                                                    className="absolute inset-0 bg-gradient-to-r from-green-600/20 to-green-900/20 border border-green-500/30 rounded-2xl"
+                                                />
+                                            )}
+                                            <div className={`relative z-10 p-2.5 rounded-xl transition-colors ${isActive ? 'bg-green-500 text-white shadow-lg shadow-green-500/40' : 'bg-white/5 text-gray-500 group-hover:bg-white/10 group-hover:text-white'
+                                                }`}>
                                                 {item.icon}
-                                            </span>
-                                            <span>{item.label}</span>
+                                            </div>
+                                            <span className="relative z-10 font-bold text-lg tracking-tight">{item.label}</span>
+                                            {!isActive && (
+                                                <div className="ml-auto opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    <Sparkles size={14} className="text-green-500" />
+                                                </div>
+                                            )}
                                         </motion.button>
-                                    ))}
-                                </div>
+                                    );
+                                })}
+                            </nav>
 
-                                {/* Logout Button */}
-                                <motion.button
-                                    initial={{ opacity: 0, y: 20 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    transition={{ delay: 0.4 }}
+                            {/* Logout at bottom */}
+                            <motion.div
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.6 }}
+                                className="mt-auto pt-6 border-t border-white/5"
+                            >
+                                <button
                                     onClick={handleLogout}
-                                    className="w-full flex items-center gap-4 px-5 py-4 rounded-xl bg-red-500/10 text-red-400 hover:bg-red-500/20 font-medium transition-all border border-red-500/20"
+                                    className="w-full h-16 flex items-center justify-center gap-3 rounded-2xl bg-red-500/5 hover:bg-red-500/10 text-red-400 border border-red-500/10 hover:border-red-500/30 font-bold tracking-wide transition-all duration-300"
                                 >
-                                    <LogOut size={16} />
-                                    <span>Log Out</span>
-                                </motion.button>
-                            </div>
-                        </motion.div>
-                    </>
+                                    <LogOut size={20} />
+                                    <span>Disconnect</span>
+                                </button>
+                                <p className="text-center mt-6 text-[10px] text-gray-600 uppercase tracking-[0.2em] font-medium">DeerCamp v2.0</p>
+                            </motion.div>
+                        </div>
+                    </motion.div>
                 )}
             </AnimatePresence>
+
         </>
     );
 };
@@ -197,11 +236,10 @@ const NavLink = ({ icon, label, onClick, active }: { icon: React.ReactNode, labe
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
         onClick={onClick}
-        className={`flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-medium transition-all duration-300 relative ${
-            active
+        className={`flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-medium transition-all duration-300 relative ${active
                 ? 'bg-gradient-to-r from-green-600 to-green-700 text-white shadow-lg shadow-green-900/50'
                 : 'text-gray-400 hover:text-white hover:bg-white/10'
-        }`}
+            }`}
     >
         {active && (
             <motion.div
