@@ -3,8 +3,8 @@ import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import { Target, Calendar, MapPin, TrendingUp, Sun, Wind, ArrowUpRight, Thermometer, Droplets } from 'lucide-react';
 import { db } from '../firebase/config';
-import { collection, query, where, orderBy, limit as firestoreLimit, onSnapshot, getDocs } from 'firebase/firestore';
-import type { Harvest, Booking, Stand, Post } from '../types';
+import { collection, query, where, orderBy, limit as firestoreLimit, onSnapshot } from 'firebase/firestore';
+import type { Booking, Post } from '../types';
 import { useNavigate } from 'react-router-dom';
 
 const Dashboard = () => {
@@ -18,6 +18,15 @@ const Dashboard = () => {
     const [activeStandsCount, setActiveStandsCount] = useState(0);
     const [activeMembersCount, setActiveMembersCount] = useState(0);
     const [recentPosts, setRecentPosts] = useState<Post[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    // Hide loading screen after initial data fetch
+    useEffect(() => {
+        if (activeClubId) {
+            const timer = setTimeout(() => setLoading(false), 1500);
+            return () => clearTimeout(timer);
+        }
+    }, [activeClubId]);
 
     // Fetch harvest count
     useEffect(() => {
@@ -135,6 +144,17 @@ const Dashboard = () => {
     const nextBookingText = nextBooking
         ? `Next: ${new Date(nextBooking.startTime).toLocaleDateString('en-US', { weekday: 'short', hour: 'numeric', minute: '2-digit' })}`
         : 'No bookings';
+
+    if (loading) {
+        return (
+            <div className="min-h-screen flex items-center justify-center">
+                <div className="text-center">
+                    <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-green-500 mx-auto mb-4"></div>
+                    <p className="text-gray-400 text-lg">Loading dashboard...</p>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="space-y-8 pt-6 pb-20">
@@ -304,7 +324,7 @@ const Dashboard = () => {
                                                     <span className="font-bold text-white">{post.userName || 'Hunter'}</span>
                                                     {post.type === 'harvest' && <span className="text-green-400 font-semibold"> logged a harvest</span>}
                                                     {post.type === 'announcement' && <span className="text-blue-400 font-semibold"> made an announcement</span>}
-                                                    {post.type === 'general' && <span> posted</span>}
+                                                    {post.type === 'text' && <span> posted</span>}
                                                 </p>
                                                 <p className="text-xs text-gray-400 mt-1 truncate">
                                                     {post.content.split('\n')[0].slice(0, 80)}
