@@ -1,10 +1,113 @@
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import { Target, Calendar, MapPin, TrendingUp, Sun, Wind, ArrowUpRight, Thermometer, Droplets } from 'lucide-react';
+import { db } from '../firebase/config';
+import { collection, query, where, orderBy, limit as firestoreLimit, onSnapshot, getDocs } from 'firebase/firestore';
+import type { Harvest, Booking, Stand, Post } from '../types';
+import { useNavigate } from 'react-router-dom';
 
 const Dashboard = () => {
-    const { profile } = useAuth();
+    const { profile, user, activeClubId } = useAuth();
+    const navigate = useNavigate();
     const firstName = profile?.displayName?.split(' ')[0] || 'Hunter';
+
+    // Real-time data state
+    const [harvestCount, setHarvestCount] = useState(0);
+    const [upcomingBookings, setUpcomingBookings] = useState<Booking[]>([]);
+    const [activeStandsCount, setActiveStandsCount] = useState(0);
+    const [activeMembersCount, setActiveMembersCount] = useState(0);
+    const [recentPosts, setRecentPosts] = useState<Post[]>([]);
+
+    // Fetch harvest count
+    useEffect(() => {
+        if (!activeClubId) return;
+
+        const q = query(
+            collection(db, 'harvests'),
+            where('clubId', '==', activeClubId)
+        );
+
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            setHarvestCount(snapshot.size);
+        });
+
+        return unsubscribe;
+    }, [activeClubId]);
+
+    // Fetch upcoming bookings
+    useEffect(() => {
+        if (!user || !activeClubId) return;
+
+        const now = new Date().toISOString();
+        const q = query(
+            collection(db, 'bookings'),
+            where('clubId', '==', activeClubId),
+            where('userId', '==', user.uid),
+            where('status', 'in', ['confirmed', 'checked-in']),
+            orderBy('startTime', 'asc')
+        );
+
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            const bookings = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Booking))
+                .filter(b => b.startTime >= now);
+            setUpcomingBookings(bookings);
+        });
+
+        return unsubscribe;
+    }, [user, activeClubId]);
+
+    // Fetch active stands count
+    useEffect(() => {
+        if (!activeClubId) return;
+
+        const q = query(
+            collection(db, 'stands'),
+            where('clubId', '==', activeClubId)
+        );
+
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            setActiveStandsCount(snapshot.size);
+        });
+
+        return unsubscribe;
+    }, [activeClubId]);
+
+    // Fetch active members count
+    useEffect(() => {
+        if (!activeClubId) return;
+
+        const q = query(
+            collection(db, 'clubMemberships'),
+            where('clubId', '==', activeClubId),
+            where('status', '==', 'active')
+        );
+
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            setActiveMembersCount(snapshot.size);
+        });
+
+        return unsubscribe;
+    }, [activeClubId]);
+
+    // Fetch recent posts
+    useEffect(() => {
+        if (!activeClubId) return;
+
+        const q = query(
+            collection(db, 'posts'),
+            where('clubId', '==', activeClubId),
+            orderBy('createdAt', 'desc'),
+            firestoreLimit(3)
+        );
+
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            const posts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Post));
+            setRecentPosts(posts);
+        });
+
+        return unsubscribe;
+    }, [activeClubId]);
 
     const getGreeting = () => {
         const hour = new Date().getHours();
@@ -12,6 +115,26 @@ const Dashboard = () => {
         if (hour < 18) return 'Good afternoon';
         return 'Good evening';
     };
+
+    const formatRelativeTime = (timestamp: string) => {
+        const now = new Date();
+        const date = new Date(timestamp);
+        const diffMs = now.getTime() - date.getTime();
+        const diffMins = Math.floor(diffMs / 60000);
+        const diffHours = Math.floor(diffMins / 60);
+        const diffDays = Math.floor(diffHours / 24);
+
+        if (diffMins < 1) return 'Just now';
+        if (diffMins < 60) return `${diffMins}m ago`;
+        if (diffHours < 24) return `${diffHours}h ago`;
+        if (diffDays === 1) return 'Yesterday';
+        return `${diffDays}d ago`;
+    };
+
+    const nextBooking = upcomingBookings[0];
+    const nextBookingText = nextBooking
+        ? `Next: ${new Date(nextBooking.startTime).toLocaleDateString('en-US', { weekday: 'short', hour: 'numeric', minute: '2-digit' })}`
+        : 'No bookings';
 
     return (
         <div className="space-y-8 pt-6 pb-20">
@@ -89,32 +212,36 @@ const Dashboard = () => {
                     color="text-green-500"
                     bg="bg-green-500/10"
                     label="Total Harvests"
-                    value="12"
-                    trend="+3 this week"
+                    value={harvestCount.toString()}
+                    trend={`Club season total`}
+                    onClick={() => navigate('/harvests')}
                 />
                 <StatCard
                     icon={<Calendar />}
                     color="text-amber-500"
                     bg="bg-amber-500/10"
-                    label="Upcoming Bookings"
-                    value="8"
-                    trend="Next: Sat 5am"
+                    label="My Bookings"
+                    value={upcomingBookings.length.toString()}
+                    trend={nextBookingText}
+                    onClick={() => navigate('/bookings')}
                 />
                 <StatCard
                     icon={<MapPin />}
                     color="text-blue-500"
                     bg="bg-blue-500/10"
                     label="Active Stands"
-                    value="24"
-                    trend="100% Operational"
+                    value={activeStandsCount.toString()}
+                    trend="Available to book"
+                    onClick={() => navigate('/stands')}
                 />
                 <StatCard
                     icon={<TrendingUp />}
                     color="text-purple-500"
                     bg="bg-purple-500/10"
-                    label="Club Activity"
-                    value="High"
-                    trend="15 members active"
+                    label="Club Members"
+                    value={activeMembersCount.toString()}
+                    trend="Active hunters"
+                    onClick={() => navigate('/members')}
                 />
             </div>
 
@@ -141,6 +268,7 @@ const Dashboard = () => {
                             <motion.button
                                 whileHover={{ scale: 1.05, x: 3 }}
                                 whileTap={{ scale: 0.95 }}
+                                onClick={() => navigate('/feed')}
                                 className="text-sm text-green-400 hover:text-green-300 font-semibold transition-colors flex items-center gap-1 px-3 py-1.5 rounded-lg hover:bg-green-500/10"
                             >
                                 View All
@@ -149,44 +277,52 @@ const Dashboard = () => {
                         </div>
 
                         <div className="space-y-3">
-                            {[
-                                { user: 'John Doe', action: 'harvested a', target: '8-Point Buck', time: '2h ago', loc: 'North Ridge', weight: '185 lbs' },
-                                { user: 'Mike Smith', action: 'checked in at', target: 'River Blind', time: '4h ago', loc: 'River Bottoms', weight: null },
-                                { user: 'Sarah W.', action: 'harvested a', target: 'Doe', time: 'Yesterday', loc: 'Oak Grove', weight: '120 lbs' }
-                            ].map((item, i) => (
-                                <motion.div
-                                    key={i}
-                                    initial={{ opacity: 0, x: -20 }}
-                                    animate={{ opacity: 1, x: 0 }}
-                                    transition={{ delay: 0.6 + i * 0.1 }}
-                                    whileHover={{ x: 4 }}
-                                    className="glass-panel-strong p-5 rounded-2xl border border-white/10 hover:border-white/20 transition-all duration-300 flex items-center justify-between group relative overflow-hidden"
-                                >
-                                    <div className="absolute inset-0 bg-gradient-to-r from-green-500/0 to-green-500/0 group-hover:from-green-500/5 group-hover:to-transparent transition-all duration-300" />
+                            {recentPosts.length === 0 ? (
+                                <div className="glass-panel-strong p-8 rounded-2xl border border-white/10 text-center">
+                                    <p className="text-gray-400">No recent activity</p>
+                                    <p className="text-sm text-gray-500 mt-1">Be the first to post or log a harvest!</p>
+                                </div>
+                            ) : (
+                                recentPosts.map((post, i) => (
+                                    <motion.div
+                                        key={post.id}
+                                        initial={{ opacity: 0, x: -20 }}
+                                        animate={{ opacity: 1, x: 0 }}
+                                        transition={{ delay: 0.6 + i * 0.1 }}
+                                        whileHover={{ x: 4 }}
+                                        onClick={() => navigate('/feed')}
+                                        className="glass-panel-strong p-5 rounded-2xl border border-white/10 hover:border-white/20 transition-all duration-300 flex items-center justify-between group relative overflow-hidden cursor-pointer"
+                                    >
+                                        <div className="absolute inset-0 bg-gradient-to-r from-green-500/0 to-green-500/0 group-hover:from-green-500/5 group-hover:to-transparent transition-all duration-300" />
 
-                                    <div className="flex items-center gap-4 relative z-10">
-                                        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-green-600 to-green-800 flex items-center justify-center text-sm font-bold shadow-lg ring-2 ring-white/10 group-hover:ring-green-500/30 transition-all">
-                                            {item.user.charAt(0)}
+                                        <div className="flex items-center gap-4 relative z-10 flex-1 min-w-0">
+                                            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-green-600 to-green-800 flex items-center justify-center text-sm font-bold shadow-lg ring-2 ring-white/10 group-hover:ring-green-500/30 transition-all flex-shrink-0">
+                                                {post.userName?.charAt(0) || 'U'}
+                                            </div>
+                                            <div className="min-w-0 flex-1">
+                                                <p className="text-sm text-gray-200">
+                                                    <span className="font-bold text-white">{post.userName || 'Hunter'}</span>
+                                                    {post.type === 'harvest' && <span className="text-green-400 font-semibold"> logged a harvest</span>}
+                                                    {post.type === 'announcement' && <span className="text-blue-400 font-semibold"> made an announcement</span>}
+                                                    {post.type === 'general' && <span> posted</span>}
+                                                </p>
+                                                <p className="text-xs text-gray-400 mt-1 truncate">
+                                                    {post.content.split('\n')[0].slice(0, 80)}
+                                                    {post.content.length > 80 ? '...' : ''}
+                                                </p>
+                                                <p className="text-xs text-gray-500 mt-1">
+                                                    {formatRelativeTime(post.createdAt)}
+                                                </p>
+                                            </div>
                                         </div>
-                                        <div>
-                                            <p className="text-sm text-gray-200">
-                                                <span className="font-bold text-white">{item.user}</span> {item.action} <span className="text-green-400 font-semibold">{item.target}</span>
-                                            </p>
-                                            <p className="text-xs text-gray-500 mt-1 flex items-center gap-2">
-                                                <span className="font-medium">{item.time}</span>
-                                                <span className="w-1 h-1 rounded-full bg-gray-600" />
-                                                <MapPin size={10} className="text-gray-600" />
-                                                <span>{item.loc}</span>
-                                            </p>
-                                        </div>
-                                    </div>
-                                    {item.weight && (
-                                        <div className="relative z-10 px-3 py-1.5 rounded-full bg-gradient-to-br from-white/10 to-white/5 border border-white/10 text-xs font-bold text-gray-200 group-hover:border-green-500/30 group-hover:text-white transition-all shadow-lg">
-                                            {item.weight}
-                                        </div>
-                                    )}
-                                </motion.div>
-                            ))}
+                                        {post.type === 'harvest' && (
+                                            <div className="relative z-10 px-3 py-1.5 rounded-full bg-gradient-to-br from-green-500/20 to-green-500/10 border border-green-500/30 text-xs font-bold text-green-400 transition-all shadow-lg flex-shrink-0 ml-2">
+                                                🦌
+                                            </div>
+                                        )}
+                                    </motion.div>
+                                ))
+                            )}
                         </div>
                     </section>
                 </div>
@@ -239,10 +375,10 @@ const Dashboard = () => {
                     >
                         <h3 className="text-xl font-heading font-bold mb-5">Quick Actions</h3>
                         <div className="grid grid-cols-2 gap-3">
-                            <ActionButton label="Book Stand" />
-                            <ActionButton label="Log Harvest" />
-                            <ActionButton label="Rules" />
-                            <ActionButton label="Map" />
+                            <ActionButton label="Book Stand" onClick={() => navigate('/bookings/new')} />
+                            <ActionButton label="Log Harvest" onClick={() => navigate('/harvests')} />
+                            <ActionButton label="Check In" onClick={() => navigate('/check-in')} />
+                            <ActionButton label="View Map" onClick={() => navigate('/map')} />
                         </div>
                     </motion.section>
                 </div>
@@ -251,12 +387,13 @@ const Dashboard = () => {
     );
 };
 
-const StatCard = ({ icon, label, value, trend, color, bg }: { icon: React.ReactNode, label: string, value: string, trend: string, color: string, bg: string }) => (
+const StatCard = ({ icon, label, value, trend, color, bg, onClick }: { icon: React.ReactNode, label: string, value: string, trend: string, color: string, bg: string, onClick?: () => void }) => (
     <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         whileHover={{ y: -6, scale: 1.02 }}
         transition={{ duration: 0.3 }}
+        onClick={onClick}
         className="glass-panel-strong p-6 rounded-2xl border border-white/10 relative overflow-hidden group cursor-pointer"
     >
         <div className={`absolute -top-12 -right-12 w-32 h-32 ${bg} rounded-full blur-3xl opacity-30 group-hover:opacity-60 group-hover:scale-125 transition-all duration-500`} />
@@ -282,10 +419,11 @@ const StatCard = ({ icon, label, value, trend, color, bg }: { icon: React.ReactN
     </motion.div>
 );
 
-const ActionButton = ({ label }: { label: string }) => (
+const ActionButton = ({ label, onClick }: { label: string, onClick?: () => void }) => (
     <motion.button
         whileHover={{ scale: 1.05, y: -2 }}
         whileTap={{ scale: 0.95 }}
+        onClick={onClick}
         className="p-4 bg-gradient-to-br from-white/10 to-white/5 hover:from-white/15 hover:to-white/10 border border-white/10 hover:border-white/20 rounded-xl transition-all text-sm font-semibold text-gray-300 hover:text-white shadow-lg hover:shadow-xl relative overflow-hidden group"
     >
         <div className="absolute inset-0 bg-gradient-to-br from-green-500/0 to-green-500/0 group-hover:from-green-500/10 group-hover:to-transparent transition-all duration-300" />
