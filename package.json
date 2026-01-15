@@ -5,12 +5,17 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:emulator": "cross-env VITE_USE_EMULATORS=true vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
     "deploy": "npm run build && firebase deploy",
     "deploy:hosting": "npm run build && firebase deploy --only hosting",
-    "deploy:rules": "firebase deploy --only firestore:rules,storage:rules"
+    "deploy:rules": "firebase deploy --only firestore:rules,storage:rules",
+    "emulators": "firebase emulators:start",
+    "emulators:seed": "npx tsx scripts/seedEmulator.ts",
+    "emulators:export": "firebase emulators:export ./emulator-data",
+    "emulators:import": "firebase emulators:start --import=./emulator-data"
   },
   "dependencies": {
     "@mapbox/mapbox-gl-draw": "^1.5.1",
@@ -26,6 +31,8 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",
+    "cross-env": "^7.0.3",
+    "tsx": "^4.19.2",
     "@types/mapbox-gl": "^3.4.1",
     "@types/node": "^24.10.1",
     "@types/react": "^19.2.5",
