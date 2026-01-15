@@ -36,6 +36,7 @@ const PropertyBoundaryDrawer = ({
   // Form state
   const [boundaryName, setBoundaryName] = useState('');
   const [boundaryType, setBoundaryType] = useState<PropertyBoundary['boundaryType']>('property');
+  const [ownerName, setOwnerName] = useState('');
   const [notes, setNotes] = useState('');
   const [color, setColor] = useState('#3a6326');
 
@@ -81,6 +82,7 @@ const PropertyBoundaryDrawer = ({
         name: boundaryName || 'Unnamed Boundary',
         coordinates,
         acres,
+        ownerName: ownerName.trim() || undefined,
         color,
         strokeWidth: 3,
         fillOpacity: 0.2,
@@ -97,6 +99,7 @@ const PropertyBoundaryDrawer = ({
         setShowSaveForm(false);
         setDrawnFeature(null);
         setBoundaryName('');
+        setOwnerName('');
         setNotes('');
         onDrawingComplete();
       }
@@ -114,6 +117,7 @@ const PropertyBoundaryDrawer = ({
     setShowSaveForm(false);
     setDrawnFeature(null);
     setBoundaryName('');
+    setOwnerName('');
     setNotes('');
     onCancel();
   };
@@ -124,6 +128,8 @@ const PropertyBoundaryDrawer = ({
     }
     setShowSaveForm(false);
     setDrawnFeature(null);
+    setBoundaryName('');
+    setOwnerName('');
   };
 
   const acres = drawnFeature ? calculatePolygonAcres(drawPolygonToBoundary(drawnFeature)) : 0;
@@ -211,6 +217,21 @@ const PropertyBoundaryDrawer = ({
                   />
                 </div>
 
+                {/* Owner Name */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Property Owner (OnX Style)
+                  </label>
+                  <input
+                    type="text"
+                    value={ownerName}
+                    onChange={(e) => setOwnerName(e.target.value)}
+                    placeholder="e.g., John Smith, State of Texas"
+                    className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:border-green-500/50 focus:ring-2 focus:ring-green-500/20 transition-all"
+                    disabled={saving}
+                  />
+                </div>
+
                 {/* Boundary Type */}
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">
@@ -239,9 +260,8 @@ const PropertyBoundaryDrawer = ({
                       <button
                         key={c}
                         onClick={() => setColor(c)}
-                        className={`w-10 h-10 rounded-lg border-2 transition-all ${
-                          color === c ? 'border-white scale-110' : 'border-white/20'
-                        }`}
+                        className={`w-10 h-10 rounded-lg border-2 transition-all ${color === c ? 'border-white scale-110' : 'border-white/20'
+                          }`}
                         style={{ backgroundColor: c }}
                         disabled={saving}
                       />

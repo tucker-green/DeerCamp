@@ -94,13 +94,15 @@ export default function FeedPage() {
 
           {/* Create Post Button */}
           <motion.button
-            whileHover={{ scale: 1.05 }}
+            whileHover={{ scale: 1.05, boxShadow: '0 0 25px rgba(58, 99, 38, 0.4)' }}
             whileTap={{ scale: 0.95 }}
             onClick={() => setShowCreateModal(true)}
-            className="btn-primary flex items-center gap-2"
+            className="hidden sm:flex items-center gap-3 px-6 py-3.5 rounded-2xl bg-gradient-to-r from-green-600 to-green-700 hover:from-green-500 hover:to-green-600 text-white font-bold shadow-xl shadow-green-900/30 transition-all border border-green-400/30 group"
           >
-            <Plus size={18} />
-            New Post
+            <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center group-hover:bg-white/30 transition-colors">
+              <Plus size={20} strokeWidth={3} />
+            </div>
+            <span className="tracking-tight">New Post</span>
           </motion.button>
         </div>
 
@@ -110,55 +112,50 @@ export default function FeedPage() {
 
           <button
             onClick={() => setFilterType('all')}
-            className={`px-4 py-2 rounded-lg font-medium transition-all flex-shrink-0 ${
-              filterType === 'all'
-                ? 'bg-green-500 text-white'
-                : 'bg-white/5 text-gray-400 hover:bg-white/10'
-            }`}
+            className={`px-4 py-2 rounded-lg font-medium transition-all flex-shrink-0 ${filterType === 'all'
+              ? 'bg-green-500 text-white'
+              : 'bg-white/5 text-gray-400 hover:bg-white/10'
+              }`}
           >
             All Posts
           </button>
 
           <button
             onClick={() => setFilterType('text')}
-            className={`px-4 py-2 rounded-lg font-medium transition-all flex-shrink-0 ${
-              filterType === 'text'
-                ? 'bg-blue-500 text-white'
-                : 'bg-white/5 text-gray-400 hover:bg-white/10'
-            }`}
+            className={`px-4 py-2 rounded-lg font-medium transition-all flex-shrink-0 ${filterType === 'text'
+              ? 'bg-blue-500 text-white'
+              : 'bg-white/5 text-gray-400 hover:bg-white/10'
+              }`}
           >
             Posts
           </button>
 
           <button
             onClick={() => setFilterType('harvest')}
-            className={`px-4 py-2 rounded-lg font-medium transition-all flex-shrink-0 ${
-              filterType === 'harvest'
-                ? 'bg-amber-500 text-white'
-                : 'bg-white/5 text-gray-400 hover:bg-white/10'
-            }`}
+            className={`px-4 py-2 rounded-lg font-medium transition-all flex-shrink-0 ${filterType === 'harvest'
+              ? 'bg-amber-500 text-white'
+              : 'bg-white/5 text-gray-400 hover:bg-white/10'
+              }`}
           >
             🦌 Harvests
           </button>
 
           <button
             onClick={() => setFilterType('announcement')}
-            className={`px-4 py-2 rounded-lg font-medium transition-all flex-shrink-0 ${
-              filterType === 'announcement'
-                ? 'bg-red-500 text-white'
-                : 'bg-white/5 text-gray-400 hover:bg-white/10'
-            }`}
+            className={`px-4 py-2 rounded-lg font-medium transition-all flex-shrink-0 ${filterType === 'announcement'
+              ? 'bg-red-500 text-white'
+              : 'bg-white/5 text-gray-400 hover:bg-white/10'
+              }`}
           >
             📢 Announcements
           </button>
 
           <button
             onClick={() => setFilterType('event')}
-            className={`px-4 py-2 rounded-lg font-medium transition-all flex-shrink-0 ${
-              filterType === 'event'
-                ? 'bg-purple-500 text-white'
-                : 'bg-white/5 text-gray-400 hover:bg-white/10'
-            }`}
+            className={`px-4 py-2 rounded-lg font-medium transition-all flex-shrink-0 ${filterType === 'event'
+              ? 'bg-purple-500 text-white'
+              : 'bg-white/5 text-gray-400 hover:bg-white/10'
+              }`}
           >
             📅 Events
           </button>
@@ -197,10 +194,10 @@ export default function FeedPage() {
                   : `No ${filterType} posts yet`}
               </p>
               <motion.button
-                whileHover={{ scale: 1.05 }}
+                whileHover={{ scale: 1.05, boxShadow: '0 0 20px rgba(58, 99, 38, 0.3)' }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => setShowCreateModal(true)}
-                className="btn-primary"
+                className="px-8 py-3 rounded-xl bg-gradient-to-r from-green-600 to-green-700 hover:from-green-500 hover:to-green-600 text-white font-bold shadow-lg transition-all border border-green-400/20"
               >
                 Create First Post
               </motion.button>
@@ -221,6 +218,18 @@ export default function FeedPage() {
           )}
         </AnimatePresence>
       </div>
+
+      {/* Mobile Floating Action Button */}
+      <motion.button
+        initial={{ scale: 0, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        whileHover={{ scale: 1.1 }}
+        whileTap={{ scale: 0.9 }}
+        onClick={() => setShowCreateModal(true)}
+        className="fixed bottom-24 right-6 sm:hidden w-16 h-16 rounded-full bg-gradient-to-r from-green-600 to-green-700 text-white shadow-2xl shadow-green-900/40 flex items-center justify-center z-40 border border-green-400/30"
+      >
+        <Plus size={32} strokeWidth={3} />
+      </motion.button>
 
       {/* Create Post Modal */}
       {showCreateModal && (

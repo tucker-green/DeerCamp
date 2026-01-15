@@ -55,5 +55,37 @@ export function useStands() {
     }
   };
 
-  return { stands, loading, error, updateStand };
+  const createStand = async (standData: Omit<Stand, 'id' | 'clubId'>) => {
+    if (!activeClubId) return { success: false, error: 'No active club' };
+
+    try {
+      const { addDoc } = await import('firebase/firestore');
+      const newStand: Omit<Stand, 'id'> = {
+        ...standData,
+        clubId: activeClubId,
+        status: 'available',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+
+      const docRef = await addDoc(collection(db, 'stands'), newStand);
+      return { success: true, id: docRef.id };
+    } catch (err: any) {
+      console.error('Error creating stand:', err);
+      return { success: false, error: err.message };
+    }
+  };
+
+  const deleteStand = async (standId: string) => {
+    try {
+      const { deleteDoc } = await import('firebase/firestore');
+      await deleteDoc(doc(db, 'stands', standId));
+      return { success: true };
+    } catch (err: any) {
+      console.error('Error deleting stand:', err);
+      return { success: false, error: err.message };
+    }
+  };
+
+  return { stands, loading, error, updateStand, createStand, deleteStand };
 }

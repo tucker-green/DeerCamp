@@ -2,6 +2,7 @@ import { initializeApp } from "firebase/app";
 import { getAuth, connectAuthEmulator } from "firebase/auth";
 import { getFirestore, connectFirestoreEmulator } from "firebase/firestore";
 import { getStorage, connectStorageEmulator } from "firebase/storage";
+import { getFunctions, connectFunctionsEmulator } from "firebase/functions";
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -17,6 +18,7 @@ const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
 export const storage = getStorage(app);
+export const functions = getFunctions(app);
 
 // Connect to Firebase Emulators in development mode
 // Set VITE_USE_EMULATORS=true in .env.local to enable
@@ -44,6 +46,13 @@ if (useEmulators) {
     console.log('  ✅ Storage Emulator connected (port 9199)');
   } catch (e) {
     console.warn('  ⚠️ Storage Emulator already connected or unavailable');
+  }
+
+  try {
+    connectFunctionsEmulator(functions, 'localhost', 5001);
+    console.log('  ✅ Functions Emulator connected (port 5001)');
+  } catch (e) {
+    console.warn('  ⚠️ Functions Emulator already connected or unavailable');
   }
 
   console.log('🎉 Firebase Emulators ready! UI at http://localhost:4000');

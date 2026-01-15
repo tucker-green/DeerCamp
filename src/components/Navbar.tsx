@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { auth } from '../firebase/config';
-import { LogOut, LogIn, Home, Map as MapIcon, ClipboardList, Users, Menu, X, Sparkles, Calendar, Globe, Settings, Trophy, MessageSquare } from 'lucide-react';
+import { LogOut, LogIn, Home, Map as MapIcon, ClipboardList, Users, Menu, X, Sparkles, Calendar, Globe, Settings, Trophy, MessageSquare, Shield } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import ClubSwitcher from './ClubSwitcher';
@@ -21,19 +21,18 @@ const Navbar = () => {
     const baseNavItems = [
         { icon: <Home size={16} />, label: 'Overview', path: '/' },
         { icon: <MessageSquare size={16} />, label: 'Feed', path: '/feed' },
-        { icon: <MapIcon size={16} />, label: 'Stands', path: '/stands' },
-        { icon: <Globe size={16} />, label: 'Map', path: '/map' },
+        { icon: <Users size={16} />, label: 'Club', path: '/club' },
+        { icon: <ClipboardList size={16} />, label: 'Harvests', path: '/harvests' },
         { icon: <Calendar size={16} />, label: 'Stand Board', path: '/bookings' },
         { icon: <LogIn size={16} />, label: 'Check In', path: '/check-in' },
-        { icon: <ClipboardList size={16} />, label: 'Harvests', path: '/harvests' },
-        { icon: <Trophy size={16} />, label: 'Trophy Book', path: '/trophy-book' },
-        { icon: <Users size={16} />, label: 'Members', path: '/members' },
     ];
 
-    // Add Property Management link for owners and managers
-    const navItems = activeMembership?.role === 'owner' || activeMembership?.role === 'manager'
-        ? [...baseNavItems, { icon: <Settings size={16} />, label: 'Property Mgmt', path: '/property-management' }]
-        : baseNavItems;
+    // Base navigation items plus conditional ones
+    let navItems = [...baseNavItems];
+
+    if (profile?.isSuperAdmin) {
+        navItems.push({ icon: <Shield size={16} />, label: 'Admin', path: '/admin' });
+    }
 
     return (
         <>
@@ -181,8 +180,8 @@ const Navbar = () => {
                                                 setMobileMenuOpen(false);
                                             }}
                                             className={`w-full flex items-center gap-4 p-4 rounded-2xl text-left transition-all duration-300 relative group overflow-hidden ${isActive
-                                                    ? 'text-white'
-                                                    : 'text-gray-400 hover:text-white'
+                                                ? 'text-white'
+                                                : 'text-gray-400 hover:text-white'
                                                 }`}
                                         >
                                             {isActive && (
@@ -237,8 +236,8 @@ const NavLink = ({ icon, label, onClick, active }: { icon: React.ReactNode, labe
         whileTap={{ scale: 0.95 }}
         onClick={onClick}
         className={`flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-medium transition-all duration-300 relative ${active
-                ? 'bg-gradient-to-r from-green-600 to-green-700 text-white shadow-lg shadow-green-900/50'
-                : 'text-gray-400 hover:text-white hover:bg-white/10'
+            ? 'bg-gradient-to-r from-green-600 to-green-700 text-white shadow-lg shadow-green-900/50'
+            : 'text-gray-400 hover:text-white hover:bg-white/10'
             }`}
     >
         {active && (

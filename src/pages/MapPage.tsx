@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Map as MapIcon, Filter, Pencil, Sprout, Route, Layers, Ruler } from 'lucide-react';
 import MapContainer from '../components/map/MapContainer';
+import MapSearch from '../components/map/MapSearch';
 import StandPopup from '../components/map/StandPopup';
 import StandFilter from '../components/map/StandFilter';
 import LayerControls from '../components/map/LayerControls';
@@ -11,6 +12,7 @@ import { useAuth } from '../context/AuthContext';
 import type { Stand } from '../types';
 import type { StandFilters } from '../components/map/StandFilter';
 import NoClubSelected from '../components/NoClubSelected';
+import { usePropertyBoundaries } from '../hooks/usePropertyBoundaries';
 
 const MapPage = () => {
   const navigate = useNavigate();
@@ -23,6 +25,9 @@ const MapPage = () => {
   const [isDrawingAccessRoute, setIsDrawingAccessRoute] = useState(false);
   const [isMeasuring, setIsMeasuring] = useState(false);
   const [selectedStandForRings, setSelectedStandForRings] = useState<string | null>(null);
+  const { boundaries } = usePropertyBoundaries(activeClubId || undefined);
+  const [hiddenOwners, setHiddenOwners] = useState<string[]>([]);
+  const [mapInstance, setMapInstance] = useState<any>(null);
   const [layerVisibility, setLayerVisibility] = useState<LayerVisibility>({
     stands: true,
     propertyBoundaries: true,
@@ -109,6 +114,12 @@ const MapPage = () => {
     setLayerVisibility(prev => ({ ...prev, [layer]: visible }));
   }, []);
 
+  const handleToggleOwner = useCallback((owner: string) => {
+    setHiddenOwners(prev =>
+      prev.includes(owner) ? prev.filter(o => o !== owner) : [...prev, owner]
+    );
+  }, []);
+
   const handleStartMeasuring = useCallback(() => {
     setIsMeasuring(true);
     setIsDrawingBoundary(false);
@@ -159,13 +170,12 @@ const MapPage = () => {
                 whileTap={{ scale: 0.95 }}
                 onClick={handleStartDrawingBoundary}
                 disabled={isDrawing}
-                className={`glass-panel-strong px-4 py-3 rounded-xl border transition-all flex items-center gap-2 ${
-                  isDrawingBoundary
-                    ? 'border-green-500/30 bg-green-500/10'
-                    : isDrawing
+                className={`glass-panel-strong px-4 py-3 rounded-xl border transition-all flex items-center gap-2 ${isDrawingBoundary
+                  ? 'border-green-500/30 bg-green-500/10'
+                  : isDrawing
                     ? 'opacity-50 cursor-not-allowed border-white/10'
                     : 'border-white/10 hover:border-green-500/30 hover:bg-green-500/10'
-                }`}
+                  }`}
               >
                 <Pencil size={18} className={isDrawingBoundary ? 'text-green-400' : 'text-gray-300'} />
                 <span className="text-sm font-medium text-gray-300 hidden sm:inline">Boundary</span>
@@ -175,13 +185,12 @@ const MapPage = () => {
                 whileTap={{ scale: 0.95 }}
                 onClick={handleStartDrawingFoodPlot}
                 disabled={isDrawing}
-                className={`glass-panel-strong px-4 py-3 rounded-xl border transition-all flex items-center gap-2 ${
-                  isDrawingFoodPlot
-                    ? 'border-green-500/30 bg-green-500/10'
-                    : isDrawing
+                className={`glass-panel-strong px-4 py-3 rounded-xl border transition-all flex items-center gap-2 ${isDrawingFoodPlot
+                  ? 'border-green-500/30 bg-green-500/10'
+                  : isDrawing
                     ? 'opacity-50 cursor-not-allowed border-white/10'
                     : 'border-white/10 hover:border-green-500/30 hover:bg-green-500/10'
-                }`}
+                  }`}
               >
                 <Sprout size={18} className={isDrawingFoodPlot ? 'text-green-400' : 'text-gray-300'} />
                 <span className="text-sm font-medium text-gray-300 hidden sm:inline">Food Plot</span>
@@ -191,13 +200,12 @@ const MapPage = () => {
                 whileTap={{ scale: 0.95 }}
                 onClick={handleStartDrawingAccessRoute}
                 disabled={isDrawing}
-                className={`glass-panel-strong px-4 py-3 rounded-xl border transition-all flex items-center gap-2 ${
-                  isDrawingAccessRoute
-                    ? 'border-amber-500/30 bg-amber-500/10'
-                    : isDrawing
+                className={`glass-panel-strong px-4 py-3 rounded-xl border transition-all flex items-center gap-2 ${isDrawingAccessRoute
+                  ? 'border-amber-500/30 bg-amber-500/10'
+                  : isDrawing
                     ? 'opacity-50 cursor-not-allowed border-white/10'
                     : 'border-white/10 hover:border-amber-500/30 hover:bg-amber-500/10'
-                }`}
+                  }`}
               >
                 <Route size={18} className={isDrawingAccessRoute ? 'text-amber-400' : 'text-gray-300'} />
                 <span className="text-sm font-medium text-gray-300 hidden sm:inline">Route</span>
@@ -209,13 +217,12 @@ const MapPage = () => {
             whileTap={{ scale: 0.95 }}
             onClick={handleStartMeasuring}
             disabled={isToolActive && !isMeasuring}
-            className={`glass-panel-strong p-3 rounded-xl border transition-all ${
-              isMeasuring
-                ? 'border-blue-500/30 bg-blue-500/10'
-                : isToolActive
+            className={`glass-panel-strong p-3 rounded-xl border transition-all ${isMeasuring
+              ? 'border-blue-500/30 bg-blue-500/10'
+              : isToolActive
                 ? 'opacity-50 cursor-not-allowed border-white/10'
                 : 'border-white/10 hover:border-blue-500/30 hover:bg-blue-500/10'
-            }`}
+              }`}
             title="Measure distance"
           >
             <Ruler size={20} className={isMeasuring ? 'text-blue-400' : 'text-gray-300'} />
@@ -225,11 +232,10 @@ const MapPage = () => {
             whileTap={{ scale: 0.95 }}
             onClick={() => setShowFilters(!showFilters)}
             disabled={isToolActive}
-            className={`glass-panel-strong p-3 rounded-xl border transition-all ${
-              showFilters
-                ? 'border-green-500/30 bg-green-500/10'
-                : 'border-white/10 hover:border-white/20'
-            } ${isToolActive ? 'opacity-50 cursor-not-allowed' : ''}`}
+            className={`glass-panel-strong p-3 rounded-xl border transition-all ${showFilters
+              ? 'border-green-500/30 bg-green-500/10'
+              : 'border-white/10 hover:border-white/20'
+              } ${isToolActive ? 'opacity-50 cursor-not-allowed' : ''}`}
           >
             <Filter size={20} className={showFilters ? 'text-green-400' : 'text-gray-300'} />
           </motion.button>
@@ -238,15 +244,34 @@ const MapPage = () => {
             whileTap={{ scale: 0.95 }}
             onClick={() => setShowLayerControls(!showLayerControls)}
             disabled={isToolActive}
-            className={`glass-panel-strong p-3 rounded-xl border transition-all ${
-              showLayerControls
-                ? 'border-blue-500/30 bg-blue-500/10'
-                : 'border-white/10 hover:border-white/20'
-            } ${isToolActive ? 'opacity-50 cursor-not-allowed' : ''}`}
+            className={`glass-panel-strong p-3 rounded-xl border transition-all ${showLayerControls
+              ? 'border-blue-500/30 bg-blue-500/10'
+              : 'border-white/10 hover:border-white/20'
+              } ${isToolActive ? 'opacity-50 cursor-not-allowed' : ''}`}
           >
             <Layers size={20} className={showLayerControls ? 'text-blue-400' : 'text-gray-300'} />
           </motion.button>
         </div>
+      </motion.div>
+
+      {/* Map Search */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1 }}
+        className="px-4 mb-4"
+      >
+        <MapSearch
+          onLocationSelect={(lng, lat) => {
+            if (mapInstance) {
+              mapInstance.flyTo({
+                center: [lng, lat],
+                zoom: 16,
+                essential: true
+              });
+            }
+          }}
+        />
       </motion.div>
 
       {/* Map Container */}
@@ -262,6 +287,7 @@ const MapPage = () => {
           selectedStandForRings={selectedStandForRings || undefined}
           showDistanceRings={true}
           layerVisibility={layerVisibility}
+          boundaries={boundaries.filter(b => !b.ownerName || !hiddenOwners.includes(b.ownerName))}
           isDrawingBoundary={isDrawingBoundary}
           onBoundaryDrawComplete={handleBoundaryDrawComplete}
           onBoundaryDrawCancel={handleBoundaryDrawCancel}
@@ -273,6 +299,7 @@ const MapPage = () => {
           onAccessRouteDrawCancel={handleAccessRouteDrawCancel}
           isMeasuring={isMeasuring}
           onMeasureClose={handleMeasureClose}
+          onMapInstance={setMapInstance}
         />
       </motion.div>
 
@@ -289,6 +316,9 @@ const MapPage = () => {
         onClose={() => setShowLayerControls(false)}
         visibility={layerVisibility}
         onVisibilityChange={handleLayerVisibilityChange}
+        boundaries={boundaries}
+        hiddenOwners={hiddenOwners}
+        onToggleOwner={handleToggleOwner}
       />
 
       {/* Stand Popup Overlay */}

@@ -49,6 +49,8 @@ export interface UserProfile {
     lastActive?: string;
     profileCompleteness?: number; // 0-100%
     createdAt?: string;
+    isSuperAdmin?: boolean;      // System-wide admin access
+    isBanned?: boolean;          // Banned from platform
 }
 
 export interface Club {
@@ -84,6 +86,9 @@ export interface Club {
     // Settings
     allowGuests: boolean;
     guestPolicy?: string;
+
+    // Rules
+    rules?: string;
 
     // Audit
     createdAt: string;
@@ -189,6 +194,7 @@ export interface PropertyBoundary {
     name: string;
     coordinates: [number, number][]; // Array of [lng, lat] pairs for polygon
     acres?: number;
+    ownerName?: string; // Name of the property owner
     color?: string; // Hex color for map display
     strokeWidth?: number;
     fillOpacity?: number;
@@ -197,6 +203,27 @@ export interface PropertyBoundary {
     createdAt: string;
     createdBy: string;
     updatedAt?: string;
+}
+
+// Public Parcel Boundary (from county records - like OnX Maps)
+export interface ParcelBoundary {
+    id: string;
+    parcelId: string;             // County parcel ID/APN
+    owner: string;                // Property owner name(s)
+    ownerAddress?: string;        // Owner mailing address
+    coordinates: [number, number][][]; // MultiPolygon coordinates
+    centroid: [number, number];   // Center point for label placement
+    acres: number;
+    county: string;
+    state: string;
+    legalDescription?: string;
+    assessedValue?: number;
+    lastSaleDate?: string;
+    lastSalePrice?: number;
+    zoning?: string;
+    landUse?: string;
+    source: 'county-gis' | 'regrid' | 'manual';
+    fetchedAt: string;            // When data was retrieved
 }
 
 // Food Plot (polygon)
@@ -497,6 +524,28 @@ export interface Comment {
     createdAt: string;
     updatedAt?: string;
     editedAt?: string;
+}
+
+// Reports for moderation
+export type ReportReason = 'spam' | 'harassment' | 'inappropriate' | 'other';
+export type ReportStatus = 'pending' | 'reviewed' | 'resolved' | 'dismissed';
+
+export interface Report {
+    id: string;
+    clubId: string;
+    reporterId: string;
+    reporterName: string;
+    targetType: 'post' | 'comment';
+    targetId: string;
+    targetUserId: string;
+    targetUserName: string;
+    reason: ReportReason;
+    details?: string;
+    status: ReportStatus;
+    createdAt: string;
+    updatedAt?: string;
+    resolvedBy?: string;
+    resolvedByName?: string;
 }
 
 // Reaction to a post or comment

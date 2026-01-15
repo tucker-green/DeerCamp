@@ -21,7 +21,18 @@
       "Bash(git push:*)",
       "Bash(grep:*)",
       "Bash(firebase projects:list:*)",
-      "Bash(firebase firestore:rules:list:*)"
+      "Bash(firebase firestore:rules:list:*)",
+      "Bash(ls:*)",
+      "Bash(npx firebase deploy:*)",
+      "Bash(where firebase:*)",
+      "Bash(dir firebase*)",
+      "Bash(dir:*)",
+      "WebSearch",
+      "Bash(curl:*)",
+      "Bash(npx tsx:*)",
+      "Bash(ping:*)",
+      "Skill(ralph-loop:ralph-loop)",
+      "mcp__plugin_firebase_firebase__firebase_validate_security_rules"
     ]
   }
 }

@@ -1,52 +1,23 @@
-import { useState, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { collection, query, where, getDocs } from 'firebase/firestore';
-import { db } from '../firebase/config';
-import type { Stand } from '../types';
 import { useBookingsByDate } from '../hooks/useBookings';
+import { useStands } from '../hooks/useStands';
 import { formatBookingDate, getSunTimes } from '../utils/bookingHelpers';
-import { Calendar, Plus, ChevronLeft, ChevronRight, Sun, Moon } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { Calendar, Plus, ChevronLeft, ChevronRight, Sun, Moon, MapPin, Trash2 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import NoClubSelected from '../components/NoClubSelected';
+import AddStandModal from '../components/AddStandModal';
 
 const BookingsPage = () => {
-  const { user, activeClubId } = useAuth();
+  const { user, activeClubId, activeMembership } = useAuth();
   const [selectedDate, setSelectedDate] = useState(new Date());
-  const [stands, setStands] = useState<Stand[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [isAddStandOpen, setIsAddStandOpen] = useState(false);
 
   const { bookings } = useBookingsByDate(selectedDate);
+  const { stands, loading: standsLoading, deleteStand } = useStands();
 
-  // Fetch stands
-  useEffect(() => {
-    const fetchStands = async () => {
-      if (!activeClubId) {
-        setStands([]);
-        setLoading(false);
-        return;
-      }
-
-      try {
-        const q = query(
-          collection(db, 'stands'),
-          where('clubId', '==', activeClubId)
-        );
-        const snapshot = await getDocs(q);
-        const standData = snapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        } as Stand));
-        setStands(standData);
-        setLoading(false);
-      } catch (error) {
-        console.error('Error fetching stands:', error);
-        setLoading(false);
-      }
-    };
-
-    fetchStands();
-  }, [activeClubId]);
+  const isManager = activeMembership?.role === 'owner' || activeMembership?.role === 'manager';
 
   // Get booking for a specific stand and time slot
   const getBookingForStand = (standId: string, timeSlot: 'morning' | 'evening') => {
@@ -85,7 +56,7 @@ const BookingsPage = () => {
     return <NoClubSelected title="No Club Selected" message="Select or join a club to view and create bookings." />;
   }
 
-  if (loading) {
+  if (standsLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-white">Loading stands...</div>
@@ -94,29 +65,50 @@ const BookingsPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-6">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-6 pb-20">
       <div className="max-w-7xl mx-auto">
 
         {/* Header */}
         <div className="mb-8">
-          <div className="flex items-center justify-between mb-4">
-            <h1 className="text-4xl font-bold text-white flex items-center gap-3">
-              <Calendar className="text-green-400" size={36} />
-              Stand Board
-            </h1>
-            <Link to="/bookings/new">
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="btn btn-primary flex items-center gap-2"
-              >
-                <Plus size={20} />
-                Book a Stand
-              </motion.button>
-            </Link>
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
+            <div>
+              <h1 className="text-4xl font-bold text-white flex items-center gap-3">
+                <Calendar className="text-green-400" size={36} />
+                Stand Board
+              </h1>
+              <p className="text-gray-400 mt-2">See what's available and who's hunting where</p>
+            </div>
+
+            <div className="flex items-center gap-3">
+              {isManager && (
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setIsAddStandOpen(true)}
+                  className="btn bg-white/10 hover:bg-white/20 text-white border-white/5 flex items-center gap-2"
+                >
+                  <MapPin size={20} className="text-green-400" />
+                  Add Stand
+                </motion.button>
+              )}
+              <Link to="/bookings/new">
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="btn btn-primary flex items-center gap-2"
+                >
+                  <Plus size={20} />
+                  Book a Stand
+                </motion.button>
+              </Link>
+            </div>
           </div>
-          <p className="text-gray-400">See what's available and who's hunting where</p>
         </div>
+
+        <AddStandModal
+          isOpen={isAddStandOpen}
+          onClose={() => setIsAddStandOpen(false)}
+        />
 
         {/* Date Navigator */}
         <div className="glass-panel p-6 mb-6">
@@ -185,24 +177,22 @@ const BookingsPage = () => {
                 <motion.div
                   key={`${stand.id}-morning`}
                   whileHover={{ scale: 1.02 }}
-                  className={`glass-panel p-5 border-2 transition-all ${
-                    isAvailable
-                      ? 'border-green-500/30 hover:border-green-500/50'
-                      : isYourBooking
+                  className={`glass-panel p-5 border-2 transition-all ${isAvailable
+                    ? 'border-green-500/30 hover:border-green-500/50'
+                    : isYourBooking
                       ? 'border-blue-500/50'
                       : 'border-red-500/30'
-                  }`}
+                    }`}
                 >
                   <div className="flex items-start justify-between mb-3">
                     <h4 className="text-lg font-bold text-white">{stand.name}</h4>
                     <span
-                      className={`px-3 py-1 rounded-full text-xs font-bold ${
-                        isAvailable
-                          ? 'bg-green-500/20 text-green-400'
-                          : isYourBooking
+                      className={`px-3 py-1 rounded-full text-xs font-bold ${isAvailable
+                        ? 'bg-green-500/20 text-green-400'
+                        : isYourBooking
                           ? 'bg-blue-500/20 text-blue-400'
                           : 'bg-red-500/20 text-red-400'
-                      }`}
+                        }`}
                     >
                       {isAvailable ? 'AVAILABLE' : isYourBooking ? 'YOUR BOOKING' : 'BOOKED'}
                     </span>
@@ -232,7 +222,7 @@ const BookingsPage = () => {
                     </div>
                   ) : (
                     <Link
-                      to={`/bookings/new?standId=${stand.id}&date=${selectedDate.toISOString()}&time=morning`}
+                      to={`/bookings/new?standId=${stand.id}&date=${selectedDate.getFullYear()}-${String(selectedDate.getMonth() + 1).padStart(2, '0')}-${String(selectedDate.getDate()).padStart(2, '0')}&time=morning`}
                     >
                       <button className="btn btn-primary w-full mt-2">Book This</button>
                     </Link>
@@ -259,24 +249,22 @@ const BookingsPage = () => {
                 <motion.div
                   key={`${stand.id}-evening`}
                   whileHover={{ scale: 1.02 }}
-                  className={`glass-panel p-5 border-2 transition-all ${
-                    isAvailable
-                      ? 'border-green-500/30 hover:border-green-500/50'
-                      : isYourBooking
+                  className={`glass-panel p-5 border-2 transition-all ${isAvailable
+                    ? 'border-green-500/30 hover:border-green-500/50'
+                    : isYourBooking
                       ? 'border-blue-500/50'
                       : 'border-red-500/30'
-                  }`}
+                    }`}
                 >
                   <div className="flex items-start justify-between mb-3">
                     <h4 className="text-lg font-bold text-white">{stand.name}</h4>
                     <span
-                      className={`px-3 py-1 rounded-full text-xs font-bold ${
-                        isAvailable
-                          ? 'bg-green-500/20 text-green-400'
-                          : isYourBooking
+                      className={`px-3 py-1 rounded-full text-xs font-bold ${isAvailable
+                        ? 'bg-green-500/20 text-green-400'
+                        : isYourBooking
                           ? 'bg-blue-500/20 text-blue-400'
                           : 'bg-red-500/20 text-red-400'
-                      }`}
+                        }`}
                     >
                       {isAvailable ? 'AVAILABLE' : isYourBooking ? 'YOUR BOOKING' : 'BOOKED'}
                     </span>
@@ -306,7 +294,7 @@ const BookingsPage = () => {
                     </div>
                   ) : (
                     <Link
-                      to={`/bookings/new?standId=${stand.id}&date=${selectedDate.toISOString()}&time=evening`}
+                      to={`/bookings/new?standId=${stand.id}&date=${selectedDate.getFullYear()}-${String(selectedDate.getMonth() + 1).padStart(2, '0')}-${String(selectedDate.getDate()).padStart(2, '0')}&time=evening`}
                     >
                       <button className="btn btn-primary w-full mt-2">Book This</button>
                     </Link>

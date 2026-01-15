@@ -20,11 +20,12 @@ export interface BookingRulesConfig {
 
 /**
  * Default booking rules
+ * Note: minAdvanceHours of 0 allows same-day bookings (but still validates against start time)
  */
 const DEFAULT_RULES: BookingRulesConfig = {
   maxDaysInAdvance: 30,
   maxConsecutiveDays: 3,
-  minAdvanceHours: 24,
+  minAdvanceHours: 0, // Allow same-day bookings - validateBookingTime handles past-time check
   blackoutDates: [],
   guestBookingRestrictions: {
     allowGuests: true,
@@ -77,12 +78,12 @@ export async function validateBookingRules(
     }
   }
 
-  // Rule 3: Check blackout dates
+  // Rule 3: Check blackout dates (use local date comparison)
   if (rulesConfig.blackoutDates && rulesConfig.blackoutDates.length > 0) {
-    const bookingDate = startTime.toISOString().split('T')[0];
     const isBlackedOut = rulesConfig.blackoutDates.some(blackoutDate => {
-      const blackoutDateStr = blackoutDate.toISOString().split('T')[0];
-      return blackoutDateStr === bookingDate;
+      return blackoutDate.getFullYear() === startTime.getFullYear() &&
+        blackoutDate.getMonth() === startTime.getMonth() &&
+        blackoutDate.getDate() === startTime.getDate();
     });
 
     if (isBlackedOut) {
@@ -167,20 +168,25 @@ async function checkConsecutiveDays(
     new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
   );
 
-  // Check consecutive days around the proposed booking
-  const proposedDate = proposedStartTime.toISOString().split('T')[0];
-  const proposedTime = new Date(proposedDate);
+  // Check consecutive days around the proposed booking (use local date)
+  const proposedTime = new Date(
+    proposedStartTime.getFullYear(),
+    proposedStartTime.getMonth(),
+    proposedStartTime.getDate()
+  );
 
   // Count consecutive days before proposed date
   let daysBefore = 0;
   for (let i = 1; i <= maxConsecutiveDays; i++) {
     const checkDate = new Date(proposedTime);
     checkDate.setDate(checkDate.getDate() - i);
-    const checkDateStr = checkDate.toISOString().split('T')[0];
 
-    const hasBooking = bookings.some(b =>
-      b.startTime.startsWith(checkDateStr)
-    );
+    const hasBooking = bookings.some(b => {
+      const bookingDate = new Date(b.startTime);
+      return bookingDate.getFullYear() === checkDate.getFullYear() &&
+        bookingDate.getMonth() === checkDate.getMonth() &&
+        bookingDate.getDate() === checkDate.getDate();
+    });
 
     if (hasBooking) {
       daysBefore++;
@@ -194,11 +200,13 @@ async function checkConsecutiveDays(
   for (let i = 1; i <= maxConsecutiveDays; i++) {
     const checkDate = new Date(proposedTime);
     checkDate.setDate(checkDate.getDate() + i);
-    const checkDateStr = checkDate.toISOString().split('T')[0];
 
-    const hasBooking = bookings.some(b =>
-      b.startTime.startsWith(checkDateStr)
-    );
+    const hasBooking = bookings.some(b => {
+      const bookingDate = new Date(b.startTime);
+      return bookingDate.getFullYear() === checkDate.getFullYear() &&
+        bookingDate.getMonth() === checkDate.getMonth() &&
+        bookingDate.getDate() === checkDate.getDate();
+    });
 
     if (hasBooking) {
       daysAfter++;
@@ -264,16 +272,16 @@ async function checkGuestBookingLimit(
 }
 
 /**
- * Check if date is a blackout date
+ * Check if date is a blackout date (uses local date comparison)
  */
 export function isBlackoutDate(
   date: Date,
   blackoutDates: Date[]
 ): boolean {
-  const dateStr = date.toISOString().split('T')[0];
   return blackoutDates.some(blackoutDate => {
-    const blackoutDateStr = blackoutDate.toISOString().split('T')[0];
-    return blackoutDateStr === dateStr;
+    return blackoutDate.getFullYear() === date.getFullYear() &&
+      blackoutDate.getMonth() === date.getMonth() &&
+      blackoutDate.getDate() === date.getDate();
   });
 }
 
@@ -286,8 +294,12 @@ export async function getNextAvailableDate(
   startDate: Date = new Date()
 ): Promise<Date> {
 
-  const checkDate = new Date(startDate);
-  checkDate.setHours(6, 0, 0, 0); // Start checking from 6 AM
+  const checkDate = new Date(
+    startDate.getFullYear(),
+    startDate.getMonth(),
+    startDate.getDate(),
+    6, 0, 0, 0
+  ); // Start checking from 6 AM local time
 
   // Check up to 30 days ahead
   for (let i = 0; i < 30; i++) {
@@ -301,9 +313,10 @@ export async function getNextAvailableDate(
     const snapshot = await getDocs(q);
     const hasBooking = snapshot.docs.some(doc => {
       const booking = doc.data() as Booking;
-      const bookingDate = booking.startTime.split('T')[0];
-      const checkDateStr = checkDate.toISOString().split('T')[0];
-      return bookingDate === checkDateStr;
+      const bookingDate = new Date(booking.startTime);
+      return bookingDate.getFullYear() === checkDate.getFullYear() &&
+        bookingDate.getMonth() === checkDate.getMonth() &&
+        bookingDate.getDate() === checkDate.getDate();
     });
 
     if (!hasBooking) {

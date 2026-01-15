@@ -36,6 +36,8 @@ interface MapContainerProps {
   onAccessRouteDrawCancel?: () => void;
   isMeasuring?: boolean;
   onMeasureClose?: () => void;
+  onMapInstance?: (map: mapboxgl.Map | null) => void;
+  boundaries?: PropertyBoundary[];
 }
 
 const MapContainer = ({
@@ -65,11 +67,14 @@ const MapContainer = ({
   onAccessRouteDrawCancel,
   isMeasuring = false,
   onMeasureClose,
+  onMapInstance,
+  boundaries: boundariesProp,
 }: MapContainerProps) => {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const { map, isLoaded, error } = useMapbox(mapContainerRef, { center, zoom });
   const { stands, loading: standsLoading } = useStands();
-  const { boundaries, loading: boundariesLoading } = usePropertyBoundaries(clubId);
+  const { boundaries: fetchedBoundaries, loading: boundariesLoading } = usePropertyBoundaries(clubId);
+  const boundaries = boundariesProp || fetchedBoundaries;
   const { foodPlots, loading: foodPlotsLoading } = useFoodPlots(clubId);
   const { routes, loading: routesLoading } = useAccessRoutes(clubId);
   const { features, loading: featuresLoading } = useTerrainFeatures(clubId);
@@ -592,6 +597,13 @@ const MapContainer = ({
       });
     };
   }, [map, isLoaded, selectedStandForRings, showDistanceRings, stands, layerVisibility.distanceRings]);
+
+  // Pass map instance up if requested
+  useEffect(() => {
+    if (map && isLoaded) {
+      onMapInstance?.(map);
+    }
+  }, [map, isLoaded, onMapInstance]);
 
   if (error) {
     return (

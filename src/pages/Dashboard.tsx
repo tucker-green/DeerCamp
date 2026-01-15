@@ -2,15 +2,18 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import { Target, Calendar, MapPin, TrendingUp, Sun, Wind, ArrowUpRight, Thermometer, Droplets } from 'lucide-react';
+import { useWeather } from '../hooks/useWeather';
 import { db } from '../firebase/config';
 import { collection, query, where, orderBy, limit as firestoreLimit, onSnapshot } from 'firebase/firestore';
 import type { Booking, Post } from '../types';
 import { useNavigate } from 'react-router-dom';
 
 const Dashboard = () => {
-    const { profile, user, activeClubId } = useAuth();
+    const { profile, user, activeClubId, activeClub } = useAuth();
     const navigate = useNavigate();
     const firstName = profile?.displayName?.split(' ')[0] || 'Hunter';
+
+    const { weather, loading: weatherLoading } = useWeather(activeClub?.location?.lat, activeClub?.location?.lng);
 
     // Real-time data state
     const [harvestCount, setHarvestCount] = useState(0);
@@ -204,27 +207,42 @@ const Dashboard = () => {
                     <div className="absolute -top-10 -right-10 w-32 h-32 bg-gradient-to-br from-green-500/10 to-blue-500/10 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-700"></div>
 
                     <div className="relative flex items-center gap-6">
-                        <div className="text-center">
-                            <div className="flex items-start justify-center gap-1">
-                                <Thermometer size={20} className="text-green-400 mt-1" />
-                                <div className="text-5xl font-bold font-heading bg-gradient-to-br from-white to-gray-400 bg-clip-text text-transparent">42°</div>
+                        {weather ? (
+                            <>
+                                <div className="text-center">
+                                    <div className="flex items-start justify-center gap-1">
+                                        <Thermometer size={20} className="text-green-400 mt-1" />
+                                        <div className="text-5xl font-bold font-heading bg-gradient-to-br from-white to-gray-400 bg-clip-text text-transparent">{weather.temp}°</div>
+                                    </div>
+                                    <div className="text-xs text-green-400 font-bold uppercase tracking-wider mt-1 flex items-center gap-1 justify-center">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse"></span>
+                                        {weather.condition}
+                                    </div>
+                                </div>
+                                <div className="h-14 w-px bg-gradient-to-b from-transparent via-white/20 to-transparent" />
+                                <div className="space-y-2">
+                                    <div className="flex items-center gap-2 text-sm text-gray-300">
+                                        <Droplets size={14} className="text-blue-400" />
+                                        <span className="font-medium">{weather.precipitationChance}% Precip</span>
+                                    </div>
+                                    <div className="flex items-center gap-2 text-sm text-gray-300">
+                                        <Wind size={14} className="text-gray-400" />
+                                        <span className="font-medium">{weather.windDirection} {weather.windSpeed}mph</span>
+                                    </div>
+                                </div>
+                            </>
+                        ) : (
+                            <div className="flex items-center justify-center w-full h-full py-2">
+                                {weatherLoading ? (
+                                    <div className="text-gray-400 text-sm">Loading weather...</div>
+                                ) : (
+                                    <div className="text-gray-400 text-sm flex flex-col items-center">
+                                        <span>No location set</span>
+                                        <span className="text-xs text-gray-500">Add club location</span>
+                                    </div>
+                                )}
                             </div>
-                            <div className="text-xs text-green-400 font-bold uppercase tracking-wider mt-1 flex items-center gap-1 justify-center">
-                                <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse"></span>
-                                Perfect
-                            </div>
-                        </div>
-                        <div className="h-14 w-px bg-gradient-to-b from-transparent via-white/20 to-transparent" />
-                        <div className="space-y-2">
-                            <div className="flex items-center gap-2 text-sm text-gray-300">
-                                <Droplets size={14} className="text-blue-400" />
-                                <span className="font-medium">0% Precip</span>
-                            </div>
-                            <div className="flex items-center gap-2 text-sm text-gray-300">
-                                <Wind size={14} className="text-gray-400" />
-                                <span className="font-medium">NW 5mph</span>
-                            </div>
-                        </div>
+                        )}
                     </div>
                 </motion.div>
             </motion.header>
@@ -256,7 +274,7 @@ const Dashboard = () => {
                     label="Active Stands"
                     value={activeStandsCount.toString()}
                     trend="Available to book"
-                    onClick={() => navigate('/stands')}
+                    onClick={() => navigate('/bookings')}
                 />
                 <StatCard
                     icon={<TrendingUp />}
@@ -325,7 +343,7 @@ const Dashboard = () => {
                                             </div>
                                             <div className="min-w-0 flex-1">
                                                 <p className="text-sm text-gray-200">
-                                                    <span className="font-bold text-white">{post.userName || 'Hunter'}</span>
+                                                    <span className="font-bold text-white">{post.userName?.split(' ')[0] || 'Hunter'}</span>
                                                     {post.type === 'harvest' && <span className="text-green-400 font-semibold"> logged a harvest</span>}
                                                     {post.type === 'announcement' && <span className="text-blue-400 font-semibold"> made an announcement</span>}
                                                     {post.type === 'text' && <span> posted</span>}

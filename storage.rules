@@ -34,12 +34,32 @@ service firebase.storage {
              (isVideo() && request.resource.size < 50 * 1024 * 1024);
     }
 
+    // Check if user belongs to the specified club via custom claims
+    // NOTE: For full club-level security, deploy Cloud Functions to set custom claims:
+    //   request.auth.token.clubIds = ["clubId1", "clubId2", ...]
+    // This should be set when user joins/leaves clubs
+    function hasClubClaim(clubId) {
+      return request.auth.token.clubIds != null &&
+        clubId in request.auth.token.clubIds;
+    }
+
+    // Fallback: Check if custom claims exist at all
+    // If not set up yet, fall back to authenticated-only access
+    function isClubMemberOrFallback(clubId) {
+      return isAuthenticated() &&
+        (request.auth.token.clubIds == null || hasClubClaim(clubId));
+    }
+
     // Harvest photos
     // Path format: harvests/{userId}/{fileName}
-    // - All authenticated users can read any harvest photo
+    // - Authenticated users can read harvest photos
     // - Users can only upload photos to their own folder
     // - Photos must be images under 5MB
     // - Users can only delete their own photos
+    //
+    // SECURITY NOTE: For club-level access control, migrate to:
+    //   harvests/{clubId}/{userId}/{fileName}
+    // and use isClubMemberOrFallback(clubId) for reads
     match /harvests/{userId}/{fileName} {
       allow read: if isAuthenticated();
       allow create: if isAuthenticated() &&
@@ -51,17 +71,42 @@ service firebase.storage {
 
     // Post photos and videos
     // Path format: posts/{clubId}/{userId}/{fileName}
-    // - All authenticated users can read post media
+    // - Club members can read post media (falls back to authenticated if claims not set)
     // - Users can upload photos/videos to their own folder
     // - Media must be images (max 10MB) or videos (max 50MB)
     // - Users can delete their own media
     match /posts/{clubId}/{userId}/{fileName} {
-      allow read: if isAuthenticated();
-      allow create: if isAuthenticated() &&
+      allow read: if isClubMemberOrFallback(clubId);
+      allow create: if isClubMemberOrFallback(clubId) &&
         request.auth.uid == userId &&
         isImageOrVideo() &&
         isValidPostFileSize();
       allow delete: if isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // User avatars and profile photos
+    // Path format: avatars/{userId}/{fileName}
+    // - Anyone authenticated can read avatars (for displaying member lists)
+    // - Users can only upload/delete their own avatar
+    match /avatars/{userId}/{fileName} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() &&
+        request.auth.uid == userId &&
+        isImage() &&
+        isUnder5MB();
+      allow delete: if isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // Club photos (cover photos, gallery)
+    // Path format: clubs/{clubId}/{fileName}
+    // - Club members can read club photos
+    // - Club members can upload (manager restriction enforced at app level)
+    match /clubs/{clubId}/{fileName} {
+      allow read: if isClubMemberOrFallback(clubId);
+      allow create: if isClubMemberOrFallback(clubId) &&
+        isImage() &&
+        request.resource.size < 10 * 1024 * 1024;
+      allow delete: if isClubMemberOrFallback(clubId);
     }
 
     // Deny all other access

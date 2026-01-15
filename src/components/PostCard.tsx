@@ -6,6 +6,8 @@ import { useAuth } from '../context/AuthContext';
 import { doc, updateDoc, deleteDoc, increment } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import CommentSection from './CommentSection';
+import ReportModal from './ReportModal';
+import { Flag } from 'lucide-react';
 
 interface PostCardProps {
   post: Post;
@@ -28,6 +30,7 @@ export default function PostCard({ post, isPinned = false, onEdit, onDelete }: P
   const [showActions, setShowActions] = useState(false);
   const [showComments, setShowComments] = useState(false);
   const [userReaction, setUserReaction] = useState<ReactionType | null>(null);
+  const [showReportModal, setShowReportModal] = useState(false);
 
   const isOwnPost = user?.uid === post.userId;
   const canPin = activeMembership?.role === 'owner' || activeMembership?.role === 'manager';
@@ -96,21 +99,20 @@ export default function PostCard({ post, isPinned = false, onEdit, onDelete }: P
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className={`bg-white/5 backdrop-blur-xl rounded-2xl border hover:border-white/20 transition-all p-6 ${
-        isPinned ? 'border-yellow-500/30 bg-gradient-to-br from-yellow-500/10 to-orange-500/10' : 'border-white/10'
-      }`}
+      className={`bg-white/5 backdrop-blur-xl rounded-2xl border hover:border-white/20 transition-all p-6 ${isPinned ? 'border-yellow-500/30 bg-gradient-to-br from-yellow-500/10 to-orange-500/10' : 'border-white/10'
+        }`}
     >
       {/* Header */}
       <div className="flex items-start gap-3 mb-4">
         {/* Avatar */}
         <div className="w-12 h-12 rounded-full bg-gradient-to-br from-green-600 to-green-800 flex items-center justify-center text-white font-bold text-lg shadow-lg ring-2 ring-white/10">
-          {post.userName[0].toUpperCase()}
+          {(post.userName?.[0] || 'U').toUpperCase()}
         </div>
 
         {/* User info and timestamp */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
-            <p className="font-semibold text-white truncate">{post.userName}</p>
+            <p className="font-semibold text-white truncate">{post.userName.split(' ')[0]}</p>
             {post.editedAt && (
               <span className="text-xs text-gray-500 italic">(edited)</span>
             )}
@@ -127,14 +129,13 @@ export default function PostCard({ post, isPinned = false, onEdit, onDelete }: P
 
         {/* Post type badge */}
         {post.type !== 'text' && (
-          <span className={`px-3 py-1 rounded-full text-xs font-bold flex-shrink-0 ${
-            post.type === 'harvest' ? 'bg-amber-500/20 text-amber-400' :
+          <span className={`px-3 py-1 rounded-full text-xs font-bold flex-shrink-0 ${post.type === 'harvest' ? 'bg-amber-500/20 text-amber-400' :
             post.type === 'announcement' ? 'bg-red-500/20 text-red-400' :
-            'bg-purple-500/20 text-purple-400'
-          }`}>
+              'bg-purple-500/20 text-purple-400'
+            }`}>
             {post.type === 'harvest' ? '🦌 HARVEST' :
-             post.type === 'announcement' ? '📢 ANNOUNCEMENT' :
-             '📅 EVENT'}
+              post.type === 'announcement' ? '📢 ANNOUNCEMENT' :
+                '📅 EVENT'}
           </span>
         )}
 
@@ -192,6 +193,19 @@ export default function PostCard({ post, isPinned = false, onEdit, onDelete }: P
                     Delete Post
                   </button>
                 )}
+
+                {!isOwnPost && (
+                  <button
+                    onClick={() => {
+                      setShowReportModal(true);
+                      setShowActions(false);
+                    }}
+                    className="w-full px-4 py-2 text-left text-sm text-orange-400 hover:bg-orange-500/10 flex items-center gap-2 border-t border-white/5"
+                  >
+                    <Flag size={14} />
+                    Report Post
+                  </button>
+                )}
               </motion.div>
             )}
           </div>
@@ -205,12 +219,11 @@ export default function PostCard({ post, isPinned = false, onEdit, onDelete }: P
 
       {/* Photos & Videos */}
       {post.photos && post.photos.length > 0 && (
-        <div className={`grid gap-2 mb-4 ${
-          post.photos.length === 1 ? 'grid-cols-1' :
+        <div className={`grid gap-2 mb-4 ${post.photos.length === 1 ? 'grid-cols-1' :
           post.photos.length === 2 ? 'grid-cols-2' :
-          post.photos.length === 3 ? 'grid-cols-3' :
-          'grid-cols-2'
-        }`}>
+            post.photos.length === 3 ? 'grid-cols-3' :
+              'grid-cols-2'
+          }`}>
           {post.photos.slice(0, 4).map((mediaUrl, idx) => {
             const isVideo = mediaUrl.includes('/posts/') && (
               mediaUrl.includes('.mp4') ||
@@ -272,11 +285,10 @@ export default function PostCard({ post, isPinned = false, onEdit, onDelete }: P
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
               onClick={() => handleReaction(reactionType)}
-              className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all flex items-center gap-1.5 ${
-                isActive
-                  ? 'bg-green-500/20 text-green-400 border border-green-500/30'
-                  : 'bg-white/5 text-gray-400 hover:bg-white/10 border border-white/10'
-              }`}
+              className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all flex items-center gap-1.5 ${isActive
+                ? 'bg-green-500/20 text-green-400 border border-green-500/30'
+                : 'bg-white/5 text-gray-400 hover:bg-white/10 border border-white/10'
+                }`}
             >
               <span className="text-base">{reactionIcons[reactionType]}</span>
               {count > 0 && <span className="text-xs">{count}</span>}
@@ -286,11 +298,10 @@ export default function PostCard({ post, isPinned = false, onEdit, onDelete }: P
 
         <button
           onClick={() => setShowComments(!showComments)}
-          className={`ml-auto px-4 py-1.5 rounded-full text-sm font-medium transition-all flex items-center gap-2 ${
-            showComments
-              ? 'bg-green-500/20 text-green-400 border border-green-500/30'
-              : 'bg-white/5 text-gray-400 hover:bg-white/10 border border-white/10'
-          }`}
+          className={`ml-auto px-4 py-1.5 rounded-full text-sm font-medium transition-all flex items-center gap-2 ${showComments
+            ? 'bg-green-500/20 text-green-400 border border-green-500/30'
+            : 'bg-white/5 text-gray-400 hover:bg-white/10 border border-white/10'
+            }`}
         >
           <MessageSquare size={14} />
           {showComments ? 'Hide' : 'Comment'}
@@ -301,6 +312,17 @@ export default function PostCard({ post, isPinned = false, onEdit, onDelete }: P
       {showComments && (
         <CommentSection postId={post.id} clubId={post.clubId} />
       )}
+
+      {/* Report Modal */}
+      <ReportModal
+        isOpen={showReportModal}
+        onClose={() => setShowReportModal(false)}
+        targetType="post"
+        targetId={post.id}
+        targetUserId={post.userId}
+        targetUserName={post.userName}
+        clubId={post.clubId}
+      />
     </motion.div>
   );
 }

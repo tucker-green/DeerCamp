@@ -1,0 +1,15 @@
+# Dependencies
+node_modules/
+
+# Compiled output
+lib/
+
+# Local env files
+*.local
+
+# Logs
+*.log
+
+# IDE
+.vscode/
+.idea/

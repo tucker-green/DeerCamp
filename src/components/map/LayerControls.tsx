@@ -1,9 +1,11 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Eye, EyeOff, Layers } from 'lucide-react';
+import { X, Eye, EyeOff, Layers, User } from 'lucide-react';
+import type { PropertyBoundary } from '../../types';
 
 export interface LayerVisibility {
   stands: boolean;
   propertyBoundaries: boolean;
+  parcelBoundaries: boolean;  // Public parcel data (like OnX Maps)
   foodPlots: boolean;
   accessRoutes: boolean;
   terrainFeatures: boolean;
@@ -16,11 +18,15 @@ interface LayerControlsProps {
   onClose: () => void;
   visibility: LayerVisibility;
   onVisibilityChange: (layer: keyof LayerVisibility, visible: boolean) => void;
+  boundaries?: PropertyBoundary[];
+  hiddenOwners?: string[];
+  onToggleOwner?: (owner: string) => void;
 }
 
 const LAYER_LABELS: Record<keyof LayerVisibility, { label: string; icon: string; color: string }> = {
   stands: { label: 'Hunting Stands', icon: '🪜', color: '#3a6326' },
   propertyBoundaries: { label: 'Property Lines', icon: '📐', color: '#8b5e3c' },
+  parcelBoundaries: { label: 'Parcel Owners', icon: '🏠', color: '#e07020' },
   foodPlots: { label: 'Food Plots', icon: '🌱', color: '#52b788' },
   accessRoutes: { label: 'Access Routes', icon: '🛤️', color: '#d4a373' },
   terrainFeatures: { label: 'Terrain Intel', icon: '🗺️', color: '#4a9eff' },
@@ -28,7 +34,15 @@ const LAYER_LABELS: Record<keyof LayerVisibility, { label: string; icon: string;
   distanceRings: { label: 'Range Rings', icon: '🎯', color: '#e9c46a' },
 };
 
-const LayerControls = ({ isOpen, onClose, visibility, onVisibilityChange }: LayerControlsProps) => {
+const LayerControls = ({
+  isOpen,
+  onClose,
+  visibility,
+  onVisibilityChange,
+  boundaries = [],
+  hiddenOwners = [],
+  onToggleOwner
+}: LayerControlsProps) => {
   const handleToggle = (layer: keyof LayerVisibility) => {
     onVisibilityChange(layer, !visibility[layer]);
   };
@@ -118,11 +132,10 @@ const LayerControls = ({ isOpen, onClose, visibility, onVisibilityChange }: Laye
                   onClick={() => handleToggle(layer)}
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
-                  className={`w-full p-3 rounded-xl border-2 transition-all flex items-center justify-between ${
-                    visibility[layer]
+                  className={`w-full p-3 rounded-xl border-2 transition-all flex items-center justify-between ${visibility[layer]
                       ? 'bg-white/5 border-white/20'
                       : 'bg-white/[0.02] border-white/5 opacity-60'
-                  }`}
+                    }`}
                 >
                   <div className="flex items-center gap-3">
                     <div
@@ -142,9 +155,8 @@ const LayerControls = ({ isOpen, onClose, visibility, onVisibilityChange }: Laye
 
                   {/* Toggle Switch */}
                   <div
-                    className={`w-11 h-6 rounded-full transition-all relative ${
-                      visibility[layer] ? 'bg-green-500' : 'bg-gray-600'
-                    }`}
+                    className={`w-11 h-6 rounded-full transition-all relative ${visibility[layer] ? 'bg-green-500' : 'bg-gray-600'
+                      }`}
                   >
                     <motion.div
                       layout
@@ -158,6 +170,34 @@ const LayerControls = ({ isOpen, onClose, visibility, onVisibilityChange }: Laye
                 </motion.button>
               ))}
             </div>
+
+            {/* Property Owner Filters */}
+            {boundaries.length > 0 && boundaries.some(b => b.ownerName) && (
+              <div className="p-4 border-t border-white/10 flex-shrink-0">
+                <div className="flex items-center gap-2 mb-3 px-1">
+                  <User size={14} className="text-gray-400" />
+                  <span className="text-xs font-bold uppercase tracking-wider text-gray-500">Filter by Owner</span>
+                </div>
+                <div className="space-y-2 max-h-40 overflow-y-auto pr-1">
+                  {Array.from(new Set(boundaries.map(b => b.ownerName).filter(Boolean)))
+                    .sort()
+                    .map(owner => (
+                      <button
+                        key={owner}
+                        onClick={() => onToggleOwner?.(owner!)}
+                        className={`w-full flex items-center justify-between p-2 rounded-lg text-sm transition-all ${!hiddenOwners.includes(owner!)
+                            ? 'bg-green-500/10 text-green-400 border border-green-500/20'
+                            : 'bg-white/5 text-gray-400 border border-transparent'
+                          }`}
+                      >
+                        <span className="truncate pr-2">{owner}</span>
+                        <div className={`w-2 h-2 rounded-full ${!hiddenOwners.includes(owner!) ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.5)]' : 'bg-gray-600'}`} />
+                      </button>
+                    ))}
+                </div>
+              </div>
+            )}
+
 
             {/* Footer */}
             <div className="p-4 border-t border-white/10">

@@ -5,6 +5,8 @@ import { useAuth } from '../context/AuthContext';
 import { collection, query, where, orderBy, onSnapshot, addDoc, deleteDoc, doc, updateDoc, increment } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import type { Comment } from '../types';
+import ReportModal from './ReportModal';
+import { Flag } from 'lucide-react';
 
 interface CommentSectionProps {
   postId: string;
@@ -17,6 +19,7 @@ export default function CommentSection({ postId, clubId }: CommentSectionProps) 
   const [newComment, setNewComment] = useState('');
   const [loading, setLoading] = useState(false);
   const [showActions, setShowActions] = useState<string | null>(null);
+  const [reportingComment, setReportingComment] = useState<Comment | null>(null);
 
   // Fetch comments
   useEffect(() => {
@@ -24,15 +27,15 @@ export default function CommentSection({ postId, clubId }: CommentSectionProps) 
       collection(db, 'comments'),
       where('postId', '==', postId),
       where('clubId', '==', clubId),
-      where('parentCommentId', '==', null),
-      orderBy('createdAt', 'asc')
+      where('parentCommentId', '==', null)
     );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const commentsData = snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
-      } as Comment));
+      } as Comment))
+        .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
 
       setComments(commentsData);
     });
@@ -43,19 +46,20 @@ export default function CommentSection({ postId, clubId }: CommentSectionProps) 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!user || !profile || !newComment.trim()) return;
+    const content = newComment.trim();
+    if (!user || !profile || !content) return;
 
+    setNewComment('');
     setLoading(true);
 
     try {
       // Add comment
-      await addDoc(collection(db, 'comments'), {
+      const commentData: any = {
         postId,
         clubId,
         userId: user.uid,
-        userName: profile.displayName,
-        userAvatar: profile.avatar,
-        content: newComment.trim(),
+        userName: profile.displayName || 'Hunter',
+        content,
         parentCommentId: null,
         replyCount: 0,
         reactions: {
@@ -67,7 +71,13 @@ export default function CommentSection({ postId, clubId }: CommentSectionProps) 
           '💯': 0
         },
         createdAt: new Date().toISOString()
-      });
+      };
+
+      if (profile.avatar) {
+        commentData.userAvatar = profile.avatar;
+      }
+
+      await addDoc(collection(db, 'comments'), commentData);
 
       // Increment post comment count
       await updateDoc(doc(db, 'posts', postId), {
@@ -77,6 +87,7 @@ export default function CommentSection({ postId, clubId }: CommentSectionProps) 
       setNewComment('');
     } catch (error) {
       console.error('Error adding comment:', error);
+      alert('Failed to post comment. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -118,7 +129,7 @@ export default function CommentSection({ postId, clubId }: CommentSectionProps) 
                 >
                   {/* Avatar */}
                   <div className="w-8 h-8 rounded-full bg-gradient-to-br from-green-600 to-green-800 flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
-                    {comment.userName[0].toUpperCase()}
+                    {(comment.userName?.[0] || 'U').toUpperCase()}
                   </div>
 
                   {/* Comment content */}
@@ -167,6 +178,37 @@ export default function CommentSection({ postId, clubId }: CommentSectionProps) 
                           )}
                         </div>
                       )}
+
+                      {/* Not Own Comment Actions */}
+                      {!isOwnComment && (
+                        <div className="absolute top-2 right-2">
+                          <button
+                            onClick={() => setShowActions(showActions === comment.id ? null : comment.id)}
+                            className="w-6 h-6 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-gray-400 hover:text-white transition-all"
+                          >
+                            <MoreVertical size={12} />
+                          </button>
+
+                          {showActions === comment.id && (
+                            <motion.div
+                              initial={{ opacity: 0, scale: 0.95 }}
+                              animate={{ opacity: 1, scale: 1 }}
+                              className="absolute right-0 mt-1 w-36 bg-[#1a1d1a] border border-white/10 rounded-lg shadow-xl overflow-hidden z-10"
+                            >
+                              <button
+                                onClick={() => {
+                                  setReportingComment(comment);
+                                  setShowActions(null);
+                                }}
+                                className="w-full px-3 py-2 text-left text-xs text-orange-400 hover:bg-orange-500/10 flex items-center gap-2"
+                              >
+                                <Flag size={12} />
+                                Report
+                              </button>
+                            </motion.div>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </div>
                 </motion.div>
@@ -180,7 +222,7 @@ export default function CommentSection({ postId, clubId }: CommentSectionProps) 
       {user && (
         <form onSubmit={handleSubmit} className="flex items-start gap-3">
           <div className="w-8 h-8 rounded-full bg-gradient-to-br from-green-600 to-green-800 flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
-            {profile?.displayName?.[0]?.toUpperCase() || 'U'}
+            {(profile?.displayName?.[0] || user?.email?.[0] || 'U').toUpperCase()}
           </div>
 
           <div className="flex-1 flex items-end gap-2">
@@ -211,6 +253,19 @@ export default function CommentSection({ postId, clubId }: CommentSectionProps) 
             </button>
           </div>
         </form>
+      )}
+
+      {/* Report Modal */}
+      {reportingComment && (
+        <ReportModal
+          isOpen={!!reportingComment}
+          onClose={() => setReportingComment(null)}
+          targetType="comment"
+          targetId={reportingComment.id}
+          targetUserId={reportingComment.userId}
+          targetUserName={reportingComment.userName || 'Unknown User'}
+          clubId={clubId}
+        />
       )}
     </div>
   );
