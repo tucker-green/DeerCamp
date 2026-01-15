@@ -9,15 +9,19 @@ export async function checkBookingConflict(
   standId: string,
   startTime: Date,
   endTime: Date,
+  clubId?: string,
   excludeBookingId?: string
 ): Promise<{ hasConflict: boolean; conflictingBooking?: Booking }> {
 
   // Query for bookings that overlap with the proposed time
-  const q = query(
-    collection(db, 'bookings'),
+  const filters = [
     where('standId', '==', standId),
     where('status', 'in', ['confirmed', 'checked-in'])
-  );
+  ];
+  if (clubId) {
+    filters.push(where('clubId', '==', clubId));
+  }
+  const q = query(collection(db, 'bookings'), ...filters);
 
   const snapshot = await getDocs(q);
 

@@ -65,12 +65,18 @@ export function useBookings(options: UseBookingsOptions = {}) {
           ...docSnap.data()
         } as Booking));
 
-        // Filter by date if provided
+        // Filter by date if provided (use local date comparison, not UTC)
         if (options.date) {
-          const dateStr = options.date.toISOString().split('T')[0];
-          bookingData = bookingData.filter(b =>
-            b.startTime.startsWith(dateStr)
-          );
+          const targetYear = options.date.getFullYear();
+          const targetMonth = options.date.getMonth();
+          const targetDay = options.date.getDate();
+
+          bookingData = bookingData.filter(b => {
+            const bookingDate = new Date(b.startTime);
+            return bookingDate.getFullYear() === targetYear &&
+              bookingDate.getMonth() === targetMonth &&
+              bookingDate.getDate() === targetDay;
+          });
         }
 
         setBookings(bookingData);
@@ -96,12 +102,18 @@ export function useBookings(options: UseBookingsOptions = {}) {
     userName: string;
     startTime: Date;
     endTime: Date;
+    clubId?: string;
     huntType?: 'morning' | 'evening' | 'all-day';
     notes?: string;
     isGuest?: boolean;
     rulesConfig?: BookingRulesConfig;
   }) => {
     try {
+      const clubId = bookingData.clubId || activeClubId;
+      if (!clubId) {
+        return { success: false, error: 'No active club selected' };
+      }
+
       // Validate times
       const validation = validateBookingTime(bookingData.startTime, bookingData.endTime);
       if (!validation.valid) {
@@ -115,7 +127,7 @@ export function useBookings(options: UseBookingsOptions = {}) {
           standId: bookingData.standId,
           startTime: bookingData.startTime,
           endTime: bookingData.endTime,
-          clubId: activeClubId!,
+          clubId,
           isGuest: bookingData.isGuest
         },
         bookingData.rulesConfig
@@ -129,7 +141,8 @@ export function useBookings(options: UseBookingsOptions = {}) {
       const conflict = await checkBookingConflict(
         bookingData.standId,
         bookingData.startTime,
-        bookingData.endTime
+        bookingData.endTime,
+        clubId
       );
 
       if (conflict.hasConflict) {
@@ -141,7 +154,7 @@ export function useBookings(options: UseBookingsOptions = {}) {
       // Create booking
       const now = new Date().toISOString();
       const docRef = await addDoc(collection(db, 'bookings'), {
-        clubId: activeClubId,
+        clubId,
         standId: bookingData.standId,
         standName: bookingData.standName,
         userId: bookingData.userId,
