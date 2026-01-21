@@ -1,18 +1,38 @@
+import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { auth } from '../firebase/config';
-import { LogOut, LogIn, Home, ClipboardList, Users, Sparkles, Calendar, MessageSquare, Shield } from 'lucide-react';
+import { LogOut, LogIn, Home, ClipboardList, Users, Sparkles, Calendar, MessageSquare, Shield, Plus, Target, MapPin, X } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import ClubSwitcher from './ClubSwitcher';
+import CreatePostModal from './CreatePostModal';
 
 const Navbar = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const { profile, activeMembership } = useAuth();
+    const [showQuickActions, setShowQuickActions] = useState(false);
+    const [showCreatePost, setShowCreatePost] = useState(false);
 
     const handleLogout = () => {
         auth.signOut();
         navigate('/');
+    };
+
+    const quickActions = [
+        { icon: <MessageSquare size={18} />, label: 'New Post', action: () => setShowCreatePost(true) },
+        { icon: <Target size={18} />, label: 'Record Harvest', path: '/harvest' },
+        { icon: <Calendar size={18} />, label: 'Book Stand', path: '/bookings/new' },
+        { icon: <MapPin size={18} />, label: 'Check In/Out', path: '/check-in' },
+    ];
+
+    const handleQuickAction = (item: typeof quickActions[0]) => {
+        setShowQuickActions(false);
+        if (item.action) {
+            item.action();
+        } else if (item.path) {
+            navigate(item.path);
+        }
     };
 
     const baseNavItems = [
@@ -69,7 +89,63 @@ const Navbar = () => {
                         </div>
                     </div>
 
-                    <div className="flex items-center gap-2 sm:gap-6">
+                    <div className="flex items-center gap-2 sm:gap-4">
+                        {/* Quick Actions Button */}
+                        <div className="relative">
+                            <motion.button
+                                whileHover={{ scale: 1.02 }}
+                                whileTap={{ scale: 0.98 }}
+                                onClick={() => setShowQuickActions(!showQuickActions)}
+                                className="flex items-center gap-2 px-3 py-2 rounded-lg bg-gradient-to-r from-emerald-500 to-emerald-600 text-white font-semibold text-sm shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40 transition-all duration-300"
+                            >
+                                <motion.div
+                                    animate={{ rotate: showQuickActions ? 45 : 0 }}
+                                    transition={{ duration: 0.2 }}
+                                >
+                                    {showQuickActions ? <X size={18} /> : <Plus size={18} />}
+                                </motion.div>
+                                <span className="hidden sm:inline">Quick Action</span>
+                            </motion.button>
+
+                            {/* Dropdown Menu */}
+                            <AnimatePresence>
+                                {showQuickActions && (
+                                    <>
+                                        {/* Backdrop */}
+                                        <motion.div
+                                            initial={{ opacity: 0 }}
+                                            animate={{ opacity: 1 }}
+                                            exit={{ opacity: 0 }}
+                                            className="fixed inset-0 z-40"
+                                            onClick={() => setShowQuickActions(false)}
+                                        />
+                                        
+                                        {/* Menu */}
+                                        <motion.div
+                                            initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                                            exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                                            transition={{ duration: 0.15 }}
+                                            className="absolute right-0 top-full mt-2 w-48 bg-[#0a0c08]/95 backdrop-blur-xl border border-white/10 rounded-xl shadow-2xl z-50 overflow-hidden"
+                                        >
+                                            {quickActions.map((item, index) => (
+                                                <motion.button
+                                                    key={item.label}
+                                                    initial={{ opacity: 0, x: -10 }}
+                                                    animate={{ opacity: 1, x: 0, transition: { delay: index * 0.05 } }}
+                                                    onClick={() => handleQuickAction(item)}
+                                                    className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-300 hover:text-white hover:bg-white/10 transition-colors"
+                                                >
+                                                    <span className="text-emerald-400">{item.icon}</span>
+                                                    {item.label}
+                                                </motion.button>
+                                            ))}
+                                        </motion.div>
+                                    </>
+                                )}
+                            </AnimatePresence>
+                        </div>
+
                         <div className="text-right hidden lg:block">
                             <p className="text-sm font-bold text-white leading-none mb-1.5">{profile?.displayName}</p>
                             <div className="flex items-center justify-end gap-2">
@@ -93,6 +169,11 @@ const Navbar = () => {
                     </div>
                 </div>
             </motion.nav>
+
+            {/* Create Post Modal */}
+            {showCreatePost && (
+                <CreatePostModal onClose={() => setShowCreatePost(false)} />
+            )}
         </>
     );
 };
