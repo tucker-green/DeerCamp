@@ -9,7 +9,7 @@ const ProfilePage = () => {
 
   const handleLogout = () => {
     auth.signOut();
-    navigate('/login');
+    navigate('/');
   };
 
   return (

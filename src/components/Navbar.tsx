@@ -12,7 +12,7 @@ const Navbar = () => {
 
     const handleLogout = () => {
         auth.signOut();
-        navigate('/login');
+        navigate('/');
     };
 
     const baseNavItems = [

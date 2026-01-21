@@ -8,12 +8,14 @@ import {
     browserLocalPersistence
 } from 'firebase/auth';
 import { auth } from '../firebase/config';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { ArrowRight, Check } from 'lucide-react';
 import { motion } from 'framer-motion';
+import loginBg from '../assets/generated/login-bg.png';
 
 const LoginPage = () => {
-    const [isLogin, setIsLogin] = useState(true);
+    const location = useLocation();
+    const [isLogin, setIsLogin] = useState(location.state?.mode !== 'signup');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
@@ -73,7 +75,7 @@ const LoginPage = () => {
                 transition={{ duration: 1.5 }}
                 className="absolute inset-0 bg-cover bg-center z-0"
                 style={{
-                    backgroundImage: 'url("https://images.unsplash.com/photo-1470770841072-f978cf4d019e?auto=format&fit=crop&q=80")',
+                    backgroundImage: `url(${loginBg})`,
                     filter: 'brightness(0.35) saturate(1.2) contrast(1.1)'
                 }}
             />

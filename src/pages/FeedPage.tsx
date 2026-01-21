@@ -81,14 +81,14 @@ export default function FeedPage() {
     <div className="min-h-screen bg-[#0a0c08] pt-20 sm:pt-28 pb-16">
       <div className="container mx-auto px-4 max-w-4xl">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5 sm:mb-8 text-center sm:text-left">
-          <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-4">
-            <div className="w-11 h-11 sm:w-14 sm:h-14 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center">
-              <MessageSquare className="text-white" size={24} />
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 mb-4 sm:mb-8 text-center sm:text-left">
+          <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4">
+            <div className="w-10 h-10 sm:w-14 sm:h-14 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center">
+              <MessageSquare className="text-white" size={22} />
             </div>
             <div>
-              <h1 className="text-3xl sm:text-4xl font-bold text-white">Activity Feed</h1>
-              <p className="text-gray-400 mt-1 text-sm sm:text-base">What's happening in your club</p>
+              <h1 className="text-2xl sm:text-4xl font-bold text-white">Activity Feed</h1>
+              <p className="text-gray-400 mt-1 text-xs sm:text-base">What's happening in your club</p>
             </div>
           </div>
 
@@ -107,58 +107,59 @@ export default function FeedPage() {
         </div>
 
         {/* Filter Tabs */}
-        <div className="flex items-center gap-2 mb-6 overflow-x-auto pb-2">
-          <Filter size={16} className="text-gray-500 flex-shrink-0" />
+        <div className="mb-6">
+          <div className="grid grid-cols-3 sm:flex sm:flex-wrap gap-2">
 
-          <button
-            onClick={() => setFilterType('all')}
-            className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-all flex-shrink-0 ${filterType === 'all'
-              ? 'bg-green-500 text-white'
-              : 'bg-white/5 text-gray-400 hover:bg-white/10'
-              }`}
-          >
-            All Posts
-          </button>
+            <button
+              onClick={() => setFilterType('all')}
+              className={`w-full sm:w-auto px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-lg text-[11px] sm:text-sm font-semibold transition-all ${filterType === 'all'
+                ? 'bg-green-500 text-white'
+                : 'bg-white/5 text-gray-400 hover:bg-white/10'
+                }`}
+            >
+              All
+            </button>
 
-          <button
-            onClick={() => setFilterType('text')}
-            className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-all flex-shrink-0 ${filterType === 'text'
-              ? 'bg-blue-500 text-white'
-              : 'bg-white/5 text-gray-400 hover:bg-white/10'
-              }`}
-          >
-            Posts
-          </button>
+            <button
+              onClick={() => setFilterType('text')}
+              className={`w-full sm:w-auto px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-lg text-[11px] sm:text-sm font-semibold transition-all ${filterType === 'text'
+                ? 'bg-blue-500 text-white'
+                : 'bg-white/5 text-gray-400 hover:bg-white/10'
+                }`}
+            >
+              Posts
+            </button>
 
-          <button
-            onClick={() => setFilterType('harvest')}
-            className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-all flex-shrink-0 ${filterType === 'harvest'
-              ? 'bg-amber-500 text-white'
-              : 'bg-white/5 text-gray-400 hover:bg-white/10'
-              }`}
-          >
-            🦌 Harvests
-          </button>
+            <button
+              onClick={() => setFilterType('harvest')}
+              className={`w-full sm:w-auto px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-lg text-[11px] sm:text-sm font-semibold transition-all ${filterType === 'harvest'
+                ? 'bg-amber-500 text-white'
+                : 'bg-white/5 text-gray-400 hover:bg-white/10'
+                }`}
+            >
+              🦌 Harvests
+            </button>
 
-          <button
-            onClick={() => setFilterType('announcement')}
-            className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-all flex-shrink-0 ${filterType === 'announcement'
-              ? 'bg-red-500 text-white'
-              : 'bg-white/5 text-gray-400 hover:bg-white/10'
-              }`}
-          >
-            📢 Announcements
-          </button>
+            <button
+              onClick={() => setFilterType('announcement')}
+              className={`w-full sm:w-auto px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-lg text-[11px] sm:text-sm font-semibold transition-all ${filterType === 'announcement'
+                ? 'bg-red-500 text-white'
+                : 'bg-white/5 text-gray-400 hover:bg-white/10'
+                }`}
+            >
+              📢 Announce
+            </button>
 
-          <button
-            onClick={() => setFilterType('event')}
-            className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-all flex-shrink-0 ${filterType === 'event'
-              ? 'bg-purple-500 text-white'
-              : 'bg-white/5 text-gray-400 hover:bg-white/10'
-              }`}
-          >
-            📅 Events
-          </button>
+            <button
+              onClick={() => setFilterType('event')}
+              className={`w-full sm:w-auto px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-lg text-[11px] sm:text-sm font-semibold transition-all ${filterType === 'event'
+                ? 'bg-purple-500 text-white'
+                : 'bg-white/5 text-gray-400 hover:bg-white/10'
+                }`}
+            >
+              📅 Events
+            </button>
+          </div>
         </div>
 
         {/* Pinned Posts */}

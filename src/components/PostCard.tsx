@@ -95,11 +95,14 @@ export default function PostCard({ post, isPinned = false, onEdit, onDelete }: P
 
   const totalReactions = Object.values(post.reactions).reduce((sum, count) => sum + count, 0);
 
+  const visibleMediaCount = Math.min(post.photos?.length ?? 0, 4);
+  const isSingleMedia = visibleMediaCount === 1;
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className={`bg-white/5 backdrop-blur-xl rounded-2xl border hover:border-white/20 transition-all p-6 ${isPinned ? 'border-yellow-500/30 bg-gradient-to-br from-yellow-500/10 to-orange-500/10' : 'border-white/10'
+      className={`bg-white/5 backdrop-blur-xl rounded-2xl border hover:border-white/20 transition-all p-4 sm:p-6 ${isPinned ? 'border-yellow-500/30 bg-gradient-to-br from-yellow-500/10 to-orange-500/10' : 'border-white/10'
         }`}
     >
       {/* Header */}
@@ -219,11 +222,16 @@ export default function PostCard({ post, isPinned = false, onEdit, onDelete }: P
 
       {/* Photos & Videos */}
       {post.photos && post.photos.length > 0 && (
-        <div className={`grid gap-2 mb-4 ${post.photos.length === 1 ? 'grid-cols-1' :
-          post.photos.length === 2 ? 'grid-cols-2' :
-            post.photos.length === 3 ? 'grid-cols-3' :
-              'grid-cols-2'
-          }`}>
+        <div
+          className={`grid gap-2 mb-4 ${post.photos.length === 1
+            ? 'grid-cols-1'
+            : post.photos.length === 2
+              ? 'grid-cols-2'
+              : post.photos.length === 3
+                ? 'grid-cols-2 sm:grid-cols-3'
+                : 'grid-cols-2'
+            }`}
+        >
           {post.photos.slice(0, 4).map((mediaUrl, idx) => {
             const isVideo = mediaUrl.includes('/posts/') && (
               mediaUrl.includes('.mp4') ||
@@ -232,21 +240,40 @@ export default function PostCard({ post, isPinned = false, onEdit, onDelete }: P
               mediaUrl.includes('.avi')
             );
 
+            const mediaContainerClass = isSingleMedia
+              ? 'aspect-[3/4] sm:aspect-[3/2] lg:aspect-video'
+              : 'aspect-square sm:aspect-[4/3]';
+
             return (
-              <div key={idx} className="relative">
+              <div
+                key={idx}
+                className={`relative overflow-hidden rounded-xl bg-black/40 ring-1 ring-white/10 ${mediaContainerClass}`}
+              >
                 {isVideo ? (
                   <video
                     src={mediaUrl}
                     controls
-                    className="w-full h-48 object-cover rounded-xl bg-black"
+                    className="absolute inset-0 w-full h-full object-cover"
                   />
                 ) : (
-                  <img
-                    src={mediaUrl}
-                    alt={`Post media ${idx + 1}`}
-                    className="w-full h-48 object-cover rounded-xl cursor-pointer hover:opacity-90 transition-opacity"
-                    onClick={() => window.open(mediaUrl, '_blank')}
-                  />
+                  <>
+                    {isSingleMedia && (
+                      <div
+                        className="absolute inset-0 bg-center bg-cover blur-2xl scale-110 opacity-40"
+                        style={{ backgroundImage: `url(${mediaUrl})` }}
+                        aria-hidden="true"
+                      />
+                    )}
+                    <img
+                      src={mediaUrl}
+                      alt={`Post media ${idx + 1}`}
+                      loading="lazy"
+                      decoding="async"
+                      className={`absolute inset-0 w-full h-full cursor-pointer hover:opacity-95 transition-opacity ${isSingleMedia ? 'object-cover sm:object-contain' : 'object-cover'
+                        }`}
+                      onClick={() => window.open(mediaUrl, '_blank')}
+                    />
+                  </>
                 )}
                 {idx === 3 && post.photos!.length > 4 && (
                   <div className="absolute inset-0 bg-black/60 rounded-xl flex items-center justify-center pointer-events-none">
