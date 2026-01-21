@@ -38,6 +38,7 @@ const NewBookingPage = () => {
   });
   const [timeSlot, setTimeSlot] = useState(searchParams.get('time') || 'morning');
   const [notes, setNotes] = useState('');
+  const [otherStandName, setOtherStandName] = useState('');
   const [confirmOpen, setConfirmOpen] = useState(false);
 
   const parseLocalDate = (dateString: string) => {
@@ -93,6 +94,11 @@ const NewBookingPage = () => {
     if (time) setTimeSlot(time);
   }, [searchParams]);
 
+  const isOtherStand = selectedStandId === 'other';
+  const displayStandName = isOtherStand
+    ? otherStandName.trim()
+    : stands.find(s => s.id === selectedStandId)?.name || '';
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -107,10 +113,17 @@ const NewBookingPage = () => {
       return;
     }
 
-    const stand = stands.find(s => s.id === selectedStandId);
-    if (!stand) {
-      setError('Invalid stand selected');
-      return;
+    if (isOtherStand) {
+      if (!otherStandName.trim()) {
+        setError('Please enter where you are hunting');
+        return;
+      }
+    } else {
+      const stand = stands.find(s => s.id === selectedStandId);
+      if (!stand) {
+        setError('Invalid stand selected');
+        return;
+      }
     }
 
     setConfirmOpen(true);
@@ -141,15 +154,15 @@ const NewBookingPage = () => {
       }
 
       const stand = stands.find(s => s.id === selectedStandId);
-      if (!stand) {
+      if (!isOtherStand && !stand) {
         setError('Invalid stand selected');
         return;
       }
 
       const result = await createBooking({
-        standId: stand.id,
-        standName: stand.name,
-        clubId: stand.clubId,
+        standId: isOtherStand ? `other-${user.uid}` : stand!.id,
+        standName: isOtherStand ? otherStandName.trim() : stand!.name,
+        clubId: isOtherStand ? activeClubId : stand!.clubId,
         userId: user.uid,
         userName: profile.displayName,
         startTime,
@@ -211,12 +224,16 @@ const NewBookingPage = () => {
             <Calendar className="text-green-400" size={36} />
             {searchParams.get('standId') && selectedStand
               ? `Book ${selectedStand.name}`
-              : 'Book a Stand'}
+              : isOtherStand && displayStandName
+                ? `Book ${displayStandName}`
+                : 'Book a Stand'}
           </h1>
           <p className="text-gray-400 mt-2">
             {searchParams.get('standId') && selectedStand
               ? `Reserve your time at the ${selectedStand.type} stand`
-              : 'Reserve your spot for an upcoming hunt'}
+              : isOtherStand
+                ? 'Reserve your spot at a custom location'
+                : 'Reserve your spot for an upcoming hunt'}
           </p>
         </div>
 
@@ -247,7 +264,23 @@ const NewBookingPage = () => {
                     {stand.name} ({stand.type})
                   </option>
                 ))}
+                <option value="other">Other (write in)</option>
               </select>
+              {isOtherStand && (
+                <div className="mt-3">
+                  <label className="block text-xs font-semibold text-gray-400 mb-2">
+                    Where are you hunting? *
+                  </label>
+                  <input
+                    type="text"
+                    value={otherStandName}
+                    onChange={(e) => setOtherStandName(e.target.value)}
+                    placeholder="E.g., South Fence Line, Creek Bottom, Neighbor's plot"
+                    className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500/50"
+                    required
+                  />
+                </div>
+              )}
             </div>
           )}
 
@@ -344,13 +377,13 @@ const NewBookingPage = () => {
           </div>
 
           {/* Summary */}
-          {selectedStand && selectedDate && (
+          {displayStandName && selectedDate && (
             <div className="bg-green-500/10 border border-green-500/30 rounded-xl p-6 mb-8">
               <h3 className="text-lg font-bold text-white mb-4">Booking Summary</h3>
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
                   <span className="text-gray-400">Stand:</span>
-                  <span className="text-white font-medium">{selectedStand.name}</span>
+                  <span className="text-white font-medium">{displayStandName}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-400">Date:</span>
@@ -391,7 +424,7 @@ const NewBookingPage = () => {
 
         </form>
 
-        {confirmOpen && selectedStand && (
+        {confirmOpen && displayStandName && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-6">
             <div className="glass-panel w-full max-w-md p-6">
               <h2 className="text-2xl font-bold text-white mb-2">Confirm Booking</h2>
@@ -401,7 +434,7 @@ const NewBookingPage = () => {
               <div className="space-y-2 text-sm mb-6">
                 <div className="flex justify-between">
                   <span className="text-gray-400">Stand:</span>
-                  <span className="text-white font-medium">{selectedStand.name}</span>
+                  <span className="text-white font-medium">{displayStandName}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-400">Date:</span>
