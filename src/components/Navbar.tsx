@@ -83,7 +83,11 @@ const Navbar = () => {
                                     icon={item.icon}
                                     label={item.label}
                                     onClick={() => navigate(item.path)}
-                                    active={location.pathname === item.path}
+                                    active={item.path === '/admin' 
+                                        ? location.pathname.startsWith('/admin')
+                                        : location.pathname === item.path
+                                    }
+                                    variant={item.path === '/admin' ? 'admin' : 'default'}
                                 />
                             ))}
                         </div>
@@ -178,26 +182,39 @@ const Navbar = () => {
     );
 };
 
-const NavLink = ({ icon, label, onClick, active }: { icon: React.ReactNode, label: string, onClick: () => void, active?: boolean }) => (
-    <motion.button
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
-        onClick={onClick}
-        className={`flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-medium transition-all duration-300 relative ${active
-            ? 'bg-gradient-to-r from-green-600 to-green-700 text-white shadow-lg shadow-green-900/50'
-            : 'text-gray-400 hover:text-white hover:bg-white/10'
+const NavLink = ({ icon, label, onClick, active, variant = 'default' }: { icon: React.ReactNode, label: string, onClick: () => void, active?: boolean, variant?: 'default' | 'admin' }) => {
+    const isAdmin = variant === 'admin';
+    
+    return (
+        <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={onClick}
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-medium transition-all duration-300 relative ${
+                active
+                    ? isAdmin
+                        ? 'bg-gradient-to-r from-purple-600 to-purple-700 text-white shadow-lg shadow-purple-900/50'
+                        : 'bg-gradient-to-r from-green-600 to-green-700 text-white shadow-lg shadow-green-900/50'
+                    : isAdmin
+                        ? 'text-purple-400 hover:text-white hover:bg-purple-500/20 border border-purple-500/30'
+                        : 'text-gray-400 hover:text-white hover:bg-white/10'
             }`}
-    >
-        {active && (
-            <motion.div
-                layoutId="activeNav"
-                className="absolute inset-0 bg-gradient-to-r from-green-600 to-green-700 rounded-full"
-                transition={{ type: 'spring', duration: 0.6 }}
-            />
-        )}
-        <span className="relative z-10">{icon}</span>
-        <span className="relative z-10">{label}</span>
-    </motion.button>
-);
+        >
+            {active && (
+                <motion.div
+                    layoutId="activeNav"
+                    className={`absolute inset-0 rounded-full ${
+                        isAdmin 
+                            ? 'bg-gradient-to-r from-purple-600 to-purple-700'
+                            : 'bg-gradient-to-r from-green-600 to-green-700'
+                    }`}
+                    transition={{ type: 'spring', duration: 0.6 }}
+                />
+            )}
+            <span className="relative z-10">{icon}</span>
+            <span className="relative z-10">{label}</span>
+        </motion.button>
+    );
+};
 
 export default Navbar;

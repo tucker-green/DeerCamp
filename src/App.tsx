@@ -15,6 +15,7 @@ import CreateClubPage from './pages/CreateClubPage';
 import ClubDiscoveryPage from './pages/ClubDiscoveryPage';
 import CheckInOutPage from './pages/CheckInOutPage';
 import AdminDashboard from './pages/AdminDashboard';
+import BannedPage from './pages/BannedPage';
 import Navbar from './components/Navbar';
 import BottomTabBar from './components/BottomTabBar';
 import Footer from './components/Footer';
@@ -31,8 +32,9 @@ import CookiesPage from './pages/CookiesPage';
 import LandingPage from './pages/LandingPage';
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const { user } = useAuth();
+  const { user, isBanned } = useAuth();
   if (!user) return <Navigate to="/login" />;
+  if (isBanned) return <BannedPage />;
   return <>{children}</>;
 };
 

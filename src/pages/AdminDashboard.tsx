@@ -282,6 +282,9 @@ const UsersTab = () => {
     const [users, setUsers] = useState<UserProfile[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [loading, setLoading] = useState(true);
+    const [banModalUser, setBanModalUser] = useState<UserProfile | null>(null);
+    const [banReason, setBanReason] = useState('');
+    const [banLoading, setBanLoading] = useState(false);
 
     useEffect(() => {
         const q = query(collection(db, 'users'), orderBy('createdAt', 'desc'), limit(50));
@@ -292,15 +295,44 @@ const UsersTab = () => {
         return unsub;
     }, []);
 
-    const toggleBan = async (user: UserProfile) => {
-        if (!window.confirm(`Are you sure you want to ${user.isBanned ? 'unban' : 'ban'} ${user.displayName}?`)) return;
+    const openBanModal = (user: UserProfile) => {
+        setBanModalUser(user);
+        setBanReason(user.banReason || '');
+    };
+
+    const closeBanModal = () => {
+        setBanModalUser(null);
+        setBanReason('');
+    };
+
+    const handleBan = async () => {
+        if (!banModalUser) return;
+        setBanLoading(true);
+        try {
+            await updateDoc(doc(db, 'users', banModalUser.uid), {
+                isBanned: true,
+                banReason: banReason.trim() || 'Violation of terms of service',
+                bannedAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+            });
+            closeBanModal();
+        } catch (err) {
+            console.error('Error banning user:', err);
+        }
+        setBanLoading(false);
+    };
+
+    const handleUnban = async (user: UserProfile) => {
+        if (!window.confirm(`Are you sure you want to unban ${user.displayName}?`)) return;
         try {
             await updateDoc(doc(db, 'users', user.uid), {
-                isBanned: !user.isBanned,
+                isBanned: false,
+                banReason: null,
+                bannedAt: null,
                 updatedAt: new Date().toISOString()
             });
         } catch (err) {
-            console.error('Error toggling ban:', err);
+            console.error('Error unbanning user:', err);
         }
     };
 
@@ -373,9 +405,16 @@ const UsersTab = () => {
                                 </td>
                                 <td className="py-4 px-4">
                                     {user.isBanned ? (
-                                        <span className="flex items-center gap-1.5 text-red-400 font-semibold">
-                                            <Ban size={14} /> Banned
-                                        </span>
+                                        <div>
+                                            <span className="flex items-center gap-1.5 text-red-400 font-semibold">
+                                                <Ban size={14} /> Banned
+                                            </span>
+                                            {user.banReason && (
+                                                <p className="text-xs text-gray-500 mt-1 max-w-[200px] truncate" title={user.banReason}>
+                                                    {user.banReason}
+                                                </p>
+                                            )}
+                                        </div>
                                     ) : (
                                         <span className="flex items-center gap-1.5 text-green-400 font-semibold">
                                             <CheckCircle size={14} /> Active
@@ -384,7 +423,7 @@ const UsersTab = () => {
                                 </td>
                                 <td className="py-4 px-4 text-right">
                                     <button
-                                        onClick={() => toggleBan(user)}
+                                        onClick={() => user.isBanned ? handleUnban(user) : openBanModal(user)}
                                         className={`p-2 rounded-lg transition-colors ${user.isBanned ? 'text-green-400 hover:bg-green-500/10' : 'text-red-400 hover:bg-red-500/10'
                                             }`}
                                         title={user.isBanned ? 'Unban User' : 'Ban User'}
@@ -397,6 +436,86 @@ const UsersTab = () => {
                     </tbody>
                 </table>
             </div>
+
+            {/* Ban Modal */}
+            <AnimatePresence>
+                {banModalUser && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4"
+                        onClick={closeBanModal}
+                    >
+                        <motion.div
+                            initial={{ scale: 0.9, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            exit={{ scale: 0.9, opacity: 0 }}
+                            className="bg-gray-900 rounded-2xl border border-white/10 p-6 w-full max-w-md"
+                            onClick={e => e.stopPropagation()}
+                        >
+                            <div className="flex items-center gap-3 mb-6">
+                                <div className="p-2 bg-red-500/20 rounded-lg">
+                                    <Ban className="text-red-500" size={24} />
+                                </div>
+                                <div>
+                                    <h3 className="text-xl font-bold text-white">Ban User</h3>
+                                    <p className="text-sm text-gray-400">{banModalUser.displayName} ({banModalUser.email})</p>
+                                </div>
+                            </div>
+
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-400 mb-2">
+                                        Reason for Ban
+                                    </label>
+                                    <textarea
+                                        value={banReason}
+                                        onChange={(e) => setBanReason(e.target.value)}
+                                        placeholder="e.g., Violation of community guidelines, harassment, spam..."
+                                        className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-red-500/50 resize-none"
+                                        rows={3}
+                                    />
+                                    <p className="text-xs text-gray-500 mt-1">This message will be shown to the user.</p>
+                                </div>
+
+                                <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-4">
+                                    <div className="flex items-start gap-2">
+                                        <AlertTriangle size={18} className="text-amber-500 mt-0.5 shrink-0" />
+                                        <div className="text-sm text-amber-200">
+                                            <p className="font-semibold">Warning</p>
+                                            <p className="text-amber-200/80">This will immediately prevent the user from accessing the platform. They will be signed out automatically.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="flex gap-3 mt-6">
+                                <button
+                                    onClick={closeBanModal}
+                                    className="flex-1 py-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-gray-400 font-semibold transition-all"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={handleBan}
+                                    disabled={banLoading}
+                                    className="flex-1 py-3 bg-red-600 hover:bg-red-500 text-white rounded-xl font-semibold transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                                >
+                                    {banLoading ? (
+                                        <span className="animate-spin">⏳</span>
+                                    ) : (
+                                        <>
+                                            <Ban size={18} />
+                                            Ban User
+                                        </>
+                                    )}
+                                </button>
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </motion.div>
     );
 };

@@ -10,36 +10,45 @@ service cloud.firestore {
       return request.auth != null;
     }
 
+    // Check if user is NOT banned
+    function isNotBanned() {
+      return isAuthenticated() &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isBanned != true;
+    }
+
     // Check if user is a system-wide super admin
     function isSuperAdmin() {
       return isAuthenticated() &&
         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isSuperAdmin == true;
     }
 
-    // Check if user is an ACTIVE and APPROVED member of the club
-    // This ensures pending, rejected, or suspended members cannot access club data
+    // Check if user is an ACTIVE and APPROVED member of the club (and not banned)
+    // This ensures pending, rejected, suspended, or banned members cannot access club data
     function isMember(clubId) {
       let membershipPath = /databases/$(database)/documents/clubMemberships/$(clubId + '_' + request.auth.uid);
       return isAuthenticated() &&
+        isNotBanned() &&
         exists(membershipPath) &&
         get(membershipPath).data.membershipStatus == 'active' &&
         get(membershipPath).data.approvalStatus == 'approved';
     }
 
-    // Check if user has owner or manager role in the club (must be active & approved)
+    // Check if user has owner or manager role in the club (must be active & approved & not banned)
     function isManagerOrOwner(clubId) {
       let membershipPath = /databases/$(database)/documents/clubMemberships/$(clubId + '_' + request.auth.uid);
       return isAuthenticated() &&
+        isNotBanned() &&
         exists(membershipPath) &&
         get(membershipPath).data.role in ['owner', 'manager'] &&
         get(membershipPath).data.membershipStatus == 'active' &&
         get(membershipPath).data.approvalStatus == 'approved';
     }
 
-    // Check if user is owner of the club (must be active & approved)
+    // Check if user is owner of the club (must be active & approved & not banned)
     function isClubOwner(clubId) {
       let membershipPath = /databases/$(database)/documents/clubMemberships/$(clubId + '_' + request.auth.uid);
       return isAuthenticated() &&
+        isNotBanned() &&
         exists(membershipPath) &&
         get(membershipPath).data.role == 'owner' &&
         get(membershipPath).data.membershipStatus == 'active' &&

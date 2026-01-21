@@ -51,6 +51,9 @@ export interface UserProfile {
     createdAt?: string;
     isSuperAdmin?: boolean;      // System-wide admin access
     isBanned?: boolean;          // Banned from platform
+    banReason?: string;          // Reason for ban (shown to user)
+    bannedAt?: string;           // When the user was banned
+    bannedBy?: string;           // Admin who banned the user
 }
 
 export interface Club {

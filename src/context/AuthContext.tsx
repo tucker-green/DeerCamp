@@ -1,13 +1,15 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
-import { onAuthStateChanged, type User } from 'firebase/auth';
+import { onAuthStateChanged, signOut, type User } from 'firebase/auth';
 import { auth, db } from '../firebase/config';
-import { doc, getDoc, setDoc, updateDoc, collection, query, where, getDocs } from 'firebase/firestore';
+import { doc, getDoc, setDoc, updateDoc, collection, query, where, getDocs, onSnapshot } from 'firebase/firestore';
 import type { UserProfile, ClubMembership, Club } from '../types';
 
 interface AuthContextType {
     user: User | null;
     profile: UserProfile | null;
     loading: boolean;
+    isBanned: boolean;
+    banReason?: string;
 
     // Multi-Club Support
     memberships: ClubMembership[];
@@ -22,6 +24,8 @@ const AuthContext = createContext<AuthContextType>({
     user: null,
     profile: null,
     loading: true,
+    isBanned: false,
+    banReason: undefined,
     memberships: [],
     activeClubId: null,
     activeMembership: null,
@@ -34,6 +38,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const [user, setUser] = useState<User | null>(null);
     const [profile, setProfile] = useState<UserProfile | null>(null);
     const [loading, setLoading] = useState(true);
+    const [isBanned, setIsBanned] = useState(false);
+    const [banReason, setBanReason] = useState<string | undefined>(undefined);
 
     // Multi-Club State
     const [memberships, setMemberships] = useState<ClubMembership[]>([]);
@@ -113,7 +119,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }, [user, loadMemberships]);
 
     useEffect(() => {
+        let unsubscribeProfile: (() => void) | null = null;
+
         const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+            // Clean up previous profile listener
+            if (unsubscribeProfile) {
+                unsubscribeProfile();
+                unsubscribeProfile = null;
+            }
+
             setUser(firebaseUser);
 
             if (firebaseUser) {
@@ -123,7 +137,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
                 if (userDoc.exists()) {
                     userProfile = userDoc.data() as UserProfile;
+                    
+                    // Check if user is banned
+                    if (userProfile.isBanned) {
+                        setIsBanned(true);
+                        setBanReason(userProfile.banReason);
+                        setProfile(userProfile);
+                        setLoading(false);
+                        // Sign them out after a delay to show the banned message
+                        setTimeout(() => signOut(auth), 5000);
+                        return;
+                    }
+                    
                     setProfile(userProfile);
+                    setIsBanned(false);
+                    setBanReason(undefined);
                 } else {
                     // Create initial profile if it doesn't exist
                     userProfile = {
@@ -136,7 +164,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                     };
                     await setDoc(doc(db, 'users', firebaseUser.uid), userProfile);
                     setProfile(userProfile);
+                    setIsBanned(false);
+                    setBanReason(undefined);
                 }
+
+                // Set up real-time listener for ban status changes
+                unsubscribeProfile = onSnapshot(doc(db, 'users', firebaseUser.uid), (docSnapshot) => {
+                    if (docSnapshot.exists()) {
+                        const updatedProfile = docSnapshot.data() as UserProfile;
+                        setProfile(updatedProfile);
+                        
+                        // Check if user got banned while using the app
+                        if (updatedProfile.isBanned && !isBanned) {
+                            setIsBanned(true);
+                            setBanReason(updatedProfile.banReason);
+                            // Sign them out after a delay to show the banned message
+                            setTimeout(() => signOut(auth), 5000);
+                        }
+                    }
+                });
 
                 // Load memberships
                 const membershipData = await loadMemberships(firebaseUser.uid);
@@ -157,13 +203,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 setActiveClubId(null);
                 setActiveMembership(null);
                 setActiveClub(null);
+                setIsBanned(false);
+                setBanReason(undefined);
             }
 
             setLoading(false);
         });
 
-        return unsubscribe;
-    }, [loadMemberships, loadClub]);
+        return () => {
+            unsubscribe();
+            if (unsubscribeProfile) {
+                unsubscribeProfile();
+            }
+        };
+    }, [loadMemberships, loadClub, isBanned]);
 
     return (
         <AuthContext.Provider
@@ -171,6 +224,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 user,
                 profile,
                 loading,
+                isBanned,
+                banReason,
                 memberships,
                 activeClubId,
                 activeMembership,
