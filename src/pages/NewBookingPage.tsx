@@ -134,6 +134,12 @@ const NewBookingPage = () => {
     setLoading(true);
     setConfirmOpen(false);
 
+    if (!user || !profile || !activeClubId) {
+      setError('You must be logged in and have a club selected');
+      setLoading(false);
+      return;
+    }
+
     try {
       // Create start and end times based on time slot
       // Parse the date string (YYYY-MM-DD) as LOCAL date components to avoid timezone issues

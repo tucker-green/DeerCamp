@@ -5,7 +5,6 @@ import {
   Heart,
   Award,
   Camera,
-  Map,
   Calendar,
   Share2,
   Star,

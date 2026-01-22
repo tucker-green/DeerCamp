@@ -14,7 +14,7 @@ import PropertyBoundaryDrawer from './PropertyBoundaryDrawer';
 import FoodPlotDrawer from './FoodPlotDrawer';
 import AccessRouteDrawer from './AccessRouteDrawer';
 import MeasureTool from './MeasureTool';
-import type { Stand } from '../../types';
+import type { Stand, PropertyBoundary } from '../../types';
 import type { LayerVisibility } from './LayerControls';
 
 interface MapContainerProps {
@@ -50,6 +50,7 @@ const MapContainer = ({
   layerVisibility = {
     stands: true,
     propertyBoundaries: true,
+    parcelBoundaries: true,
     foodPlots: true,
     accessRoutes: true,
     terrainFeatures: true,

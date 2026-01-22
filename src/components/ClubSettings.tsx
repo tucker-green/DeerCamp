@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Save, MapPin, Globe, Lock, AlertCircle, Check, BookOpen } from 'lucide-react';
+import { Save, Globe, Lock, AlertCircle, Check, BookOpen } from 'lucide-react';
 import { useClubs } from '../hooks/useClubs';
 import type { Club } from '../types';
 

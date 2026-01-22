@@ -9,7 +9,7 @@
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { collection, query, where, getDocs, addDoc, deleteDoc, doc } from 'firebase/firestore';
+import { collection, query, where, getDocs, deleteDoc, doc } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import { useAuth } from '../context/AuthContext';
 import type { ParcelBoundary } from '../types';
@@ -93,8 +93,8 @@ export function useParcelBoundaries(
    * In production, this would call a parcel data API
    */
   const fetchFromExternalAPI = useCallback(async (
-    bounds: MapBounds,
-    center: [number, number]
+    _bounds: MapBounds,
+    _center: [number, number]
   ): Promise<ParcelBoundary[]> => {
     // TODO: Integrate with Regrid API or similar service
     // Example API call would look like:

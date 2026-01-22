@@ -31,6 +31,7 @@ const MapPage = () => {
   const [layerVisibility, setLayerVisibility] = useState<LayerVisibility>({
     stands: true,
     propertyBoundaries: true,
+    parcelBoundaries: true,
     foodPlots: true,
     accessRoutes: true,
     terrainFeatures: true,

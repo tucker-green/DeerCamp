@@ -14,7 +14,7 @@ const HuntingActivityChart = () => {
 
     const maxCount = Math.max(...activityData.map(d => d.checkIns), 1);
     
-    const bars = activityData.map((d, i) => ({
+    const bars = activityData.map((d) => ({
       ...d,
       height: maxCount > 0 ? (d.checkIns / maxCount) * 100 : 0
     }));

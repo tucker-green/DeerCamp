@@ -28,11 +28,11 @@ export function parcelToGeoJSON(parcel: ParcelBoundary): GeoJSON.Feature {
       color: getParcelColor(parcel),
     },
     geometry: isMultiPolygon ? {
-      type: 'MultiPolygon',
-      coordinates: parcel.coordinates as [number, number][][][],
+      type: 'MultiPolygon' as const,
+      coordinates: parcel.coordinates as unknown as [number, number][][][],
     } : {
-      type: 'Polygon',
-      coordinates: parcel.coordinates as [number, number][][],
+      type: 'Polygon' as const,
+      coordinates: parcel.coordinates,
     },
   };
 }

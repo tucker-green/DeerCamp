@@ -217,8 +217,9 @@ export function useMembers(options: UseMembersOptions = {}) {
     ): Promise<{ success: boolean; error?: string }> => {
         try {
             // Calculate profile completeness if updating profile fields
+            const existingMember = members.find(m => m.uid === userId);
             const completeness = calculateProfileCompleteness({
-                ...members.find(m => m.uid === userId),
+                ...(existingMember || {}),
                 ...updates
             } as UserProfile);
 

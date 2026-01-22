@@ -1,5 +1,4 @@
 import { motion } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
 import type { Stand, Booking } from '../../types';
 
 interface LiveMapActivityProps {
@@ -9,7 +8,6 @@ interface LiveMapActivityProps {
 }
 
 const LiveMapActivity = ({ stands, bookings, loading }: LiveMapActivityProps) => {
-  const navigate = useNavigate();
 
   // Get current occupancy status for each stand
   const getStandStatus = (stand: Stand) => {

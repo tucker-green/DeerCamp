@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import {
   MapIcon, Trash2,
   ChevronDown, ChevronRight, AlertCircle,
-  Users, Calendar, Settings
+  Users, Calendar
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { usePropertyBoundaries } from '../hooks/usePropertyBoundaries';
@@ -13,7 +13,7 @@ import { useTerrainFeatures } from '../hooks/useTerrainFeatures';
 import { useTrailCameras } from '../hooks/useTrailCameras';
 
 const PropertyManagementPage = () => {
-  const { activeClubId, activeMembership, activeClub } = useAuth();
+  const { activeClubId, activeMembership } = useAuth();
   const { boundaries, loading: boundariesLoading, deleteBoundary } = usePropertyBoundaries(activeClubId || undefined);
   const { foodPlots, loading: foodPlotsLoading, deleteFoodPlot } = useFoodPlots(activeClubId || undefined);
   const { routes, loading: routesLoading, deleteRoute } = useAccessRoutes(activeClubId || undefined);

@@ -123,7 +123,7 @@ export default function DatePicker({ selectedDate, onChange, minDate, label, req
 
                             {/* Calendar Grid */}
                             <div className="grid grid-cols-7 gap-1">
-                                {days.map((day, idx) => {
+                                {days.map((day) => {
                                     const isDisabled = minDate && isBefore(day, startOfDay(minDate));
                                     const isSelected = selectedDate && isSameDay(day, selectedDate);
                                     const isCurrentMonth = isSameMonth(day, viewDate);

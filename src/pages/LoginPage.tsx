@@ -13,6 +13,22 @@ import { ArrowRight, Check } from 'lucide-react';
 import { motion } from 'framer-motion';
 import loginBg from '../assets/generated/login-bg.png';
 
+// Helper to convert Firebase error codes to user-friendly messages
+const getAuthErrorMessage = (errorCode: string): string => {
+    const errorMessages: Record<string, string> = {
+        'auth/invalid-email': 'Please enter a valid email address.',
+        'auth/user-disabled': 'This account has been disabled. Contact support for help.',
+        'auth/user-not-found': 'No account found with this email. Please sign up.',
+        'auth/wrong-password': 'Incorrect password. Please try again.',
+        'auth/invalid-credential': 'Invalid email or password. Please try again.',
+        'auth/email-already-in-use': 'An account with this email already exists.',
+        'auth/weak-password': 'Password is too weak. Please use at least 6 characters.',
+        'auth/too-many-requests': 'Too many failed attempts. Please try again later.',
+        'auth/network-request-failed': 'Network error. Please check your connection.',
+    };
+    return errorMessages[errorCode] || 'An error occurred. Please try again.';
+};
+
 const LoginPage = () => {
     const location = useLocation();
     const [isLogin, setIsLogin] = useState(location.state?.mode !== 'signup');
@@ -35,7 +51,7 @@ const LoginPage = () => {
             }
             navigate('/');
         } catch (err: any) {
-            setError(err.message);
+            setError(getAuthErrorMessage(err.code));
         }
     };
 
@@ -59,9 +75,9 @@ const LoginPage = () => {
             } else if (err.code === 'auth/popup-blocked') {
                 setError('Popup was blocked by your browser. Please allow popups for this site.');
             } else if (err.code === 'auth/operation-not-allowed') {
-                setError('Google Sign-In is not enabled. Please enable it in Firebase Console.');
+                setError('Google Sign-In is not enabled. Please contact support.');
             } else {
-                setError(`Error: ${err.message}`);
+                setError(getAuthErrorMessage(err.code));
             }
         }
     };

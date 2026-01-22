@@ -313,7 +313,7 @@ export default function CreatePostModal({ onClose, onPostCreated }: CreatePostMo
               <p className="text-xs font-semibold text-gray-400 mb-2">PREVIEW</p>
               <div className="flex items-start gap-3 mb-3">
                 <div className="w-10 h-10 rounded-full bg-gradient-to-br from-green-600 to-green-800 flex items-center justify-center text-white font-bold">
-                  {profile.displayName[0].toUpperCase()}
+                  {(profile.displayName?.[0] || 'U').toUpperCase()}
                 </div>
                 <div className="flex-1">
                   <p className="font-semibold text-white">{profile.displayName}</p>

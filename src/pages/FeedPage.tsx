@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MessageSquare, Plus, Filter, Pin } from 'lucide-react';
+import { MessageSquare, Plus, Pin } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { collection, query, where, orderBy, onSnapshot } from 'firebase/firestore';
 import { db } from '../firebase/config';

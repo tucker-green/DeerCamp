@@ -1,14 +1,12 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, useScroll, useTransform } from 'framer-motion';
 import {
-    Compass,
     Map,
     Users,
     TrendingUp,
     Target,
     ChevronRight,
-    Shield,
     Smartphone,
     Calendar
 } from 'lucide-react';
@@ -31,16 +29,6 @@ const LandingPage = () => {
         window.addEventListener('scroll', handleScroll);
         return () => window.removeEventListener('scroll', handleScroll);
     }, []);
-
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/63718818-8e40-4aaa-ab70-938007117373',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'LandingPage.tsx:36',message:'LandingPage assets prepared',data:{heroBgPrefix:heroBg.slice(0,30),harvestCardPrefix:harvestCard.slice(0,30),avatar1Prefix:avatar1.slice(0,30)},timestamp:Date.now(),sessionId:'debug-session',runId:'pre-fix',hypothesisId:'A'})}).catch(()=>{});
-    // #endregion
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/63718818-8e40-4aaa-ab70-938007117373',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'LandingPage.tsx:38',message:'LandingPage hero background length',data:{heroBgLength:heroBg.length},timestamp:Date.now(),sessionId:'debug-session',runId:'pre-fix',hypothesisId:'B'})}).catch(()=>{});
-    // #endregion
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/63718818-8e40-4aaa-ab70-938007117373',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'LandingPage.tsx:40',message:'LandingPage card/avatar length',data:{harvestCardLength:harvestCard.length,avatar1Length:avatar1.length},timestamp:Date.now(),sessionId:'debug-session',runId:'pre-fix',hypothesisId:'C'})}).catch(()=>{});
-    // #endregion
 
     const features = [
         {

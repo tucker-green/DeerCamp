@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Calendar, MapPin, Clock, ChevronRight, TreePine } from 'lucide-react';
+import { Calendar, Clock, ChevronRight, TreePine } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useBookings } from '../../hooks/useBookings';
 import { useAuth } from '../../context/AuthContext';

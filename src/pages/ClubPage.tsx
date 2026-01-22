@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Users, Map as MapIcon, Settings, Shield } from 'lucide-react';
+import { Users, Map as MapIcon, Settings } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import MembersPage from './MembersPage';
 import PropertyManagementPage from './PropertyManagementPage';

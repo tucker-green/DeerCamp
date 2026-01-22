@@ -6,11 +6,9 @@ import {
     Home,
     Flag,
     BarChart3,
-    Search,
     Ban,
     CheckCircle,
     XCircle,
-    MoreVertical,
     ChevronRight,
     Search as SearchIcon,
     AlertTriangle,
@@ -18,8 +16,6 @@ import {
     TrendingUp
 } from 'lucide-react';
 import {
-    LineChart,
-    Line,
     XAxis,
     YAxis,
     CartesianGrid,
@@ -32,17 +28,15 @@ import { db } from '../firebase/config';
 import {
     collection,
     query,
-    getDocs,
     where,
     orderBy,
     limit,
     onSnapshot,
     doc,
     updateDoc,
-    Timestamp,
     deleteDoc
 } from 'firebase/firestore';
-import type { UserProfile, Club, Report, ClubMembership } from '../types';
+import type { UserProfile, Club, Report } from '../types';
 import { format } from 'date-fns';
 
 type AdminTab = 'overview' | 'users' | 'clubs' | 'moderation' | 'reports';

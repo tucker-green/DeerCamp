@@ -39,6 +39,8 @@ export function useClubs(options: UseClubsOptions = {}) {
             // Filter by user's clubs if userId provided
             if (options.userId) {
                 // Will query clubMemberships to get club IDs
+                let unsubscribeRef: (() => void) | undefined;
+
                 const loadUserClubs = async () => {
                     const membershipsQuery = query(
                         collection(db, 'clubMemberships'),
@@ -60,7 +62,7 @@ export function useClubs(options: UseClubsOptions = {}) {
                         where('__name__', 'in', clubIds)
                     );
 
-                    const unsubscribe = onSnapshot(
+                    unsubscribeRef = onSnapshot(
                         clubsQuery,
                         (snapshot) => {
                             const clubData = snapshot.docs.map(doc => ({
@@ -76,12 +78,16 @@ export function useClubs(options: UseClubsOptions = {}) {
                             setLoading(false);
                         }
                     );
-
-                    return unsubscribe;
                 };
 
                 loadUserClubs();
-                return;
+
+                // Return cleanup function
+                return () => {
+                    if (unsubscribeRef) {
+                        unsubscribeRef();
+                    }
+                };
             }
 
             // Filter by public/private

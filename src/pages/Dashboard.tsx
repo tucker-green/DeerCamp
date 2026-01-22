@@ -106,7 +106,7 @@ const Dashboard = () => {
                         onClick={() => navigate('/check-in')}
                         className="px-4 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-semibold transition-colors shadow-lg shadow-emerald-500/20"
                     >
-                        Sign In to Field
+                        Check In
                     </motion.button>
                     <motion.button
                         whileHover={{ scale: 1.02 }}

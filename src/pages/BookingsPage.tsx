@@ -5,7 +5,7 @@ import { useBookingsByDate } from '../hooks/useBookings';
 import { useStands } from '../hooks/useStands';
 import { formatBookingDate, getSunTimes } from '../utils/bookingHelpers';
 import { Calendar, Plus, ChevronLeft, ChevronRight, Sun, Moon, MapPin, X } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import NoClubSelected from '../components/NoClubSelected';
 import AddStandModal from '../components/AddStandModal';
 import MyBookingsPreview from '../components/dashboard/MyBookingsPreview';
@@ -19,7 +19,7 @@ const BookingsPage = () => {
   const [isQuickBookOpen, setIsQuickBookOpen] = useState(false);
 
   const { bookings } = useBookingsByDate(selectedDate);
-  const { stands, loading: standsLoading, deleteStand } = useStands();
+  const { stands, loading: standsLoading } = useStands();
 
   const isAdmin = activeMembership?.role === 'owner' || activeMembership?.role === 'manager';
 

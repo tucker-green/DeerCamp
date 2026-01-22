@@ -138,6 +138,10 @@ export function useClubJoinRequests(options: UseClubJoinRequestsOptions = {}) {
             const clubData = clubDoc.data();
             const userData = userDoc.data();
 
+            if (!clubData?.name) {
+                return { success: false, error: 'Club data is invalid' };
+            }
+
             // Create join request
             const requestRef = await addDoc(collection(db, 'clubJoinRequests'), {
                 userId: user.uid,

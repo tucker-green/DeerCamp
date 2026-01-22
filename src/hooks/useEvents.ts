@@ -5,8 +5,7 @@ import {
   where,
   orderBy,
   onSnapshot,
-  limit as firestoreLimit,
-  Timestamp
+  limit as firestoreLimit
 } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import { useAuth } from '../context/AuthContext';
@@ -99,7 +98,7 @@ export function useUpcomingEvents(limit: number = 5) {
 /**
  * Format event date for display
  */
-export function formatEventDate(startTime: string, endTime?: string, allDay?: boolean): string {
+export function formatEventDate(startTime: string, _endTime?: string, allDay?: boolean): string {
   const start = new Date(startTime);
   
   if (allDay) {

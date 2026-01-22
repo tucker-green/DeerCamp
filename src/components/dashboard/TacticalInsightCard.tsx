@@ -16,7 +16,7 @@ const generateInsight = (weather: WeatherData | null): string => {
     return "Set your club location to receive personalized hunting insights based on current weather conditions.";
   }
 
-  const { temp, windSpeed, windDirection, condition, isDay } = weather;
+  const { temp, windSpeed, windDirection } = weather;
   const insights: string[] = [];
 
   // Time-based advice

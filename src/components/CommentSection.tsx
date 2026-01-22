@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Send, Loader, MoreVertical, Trash2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { collection, query, where, orderBy, onSnapshot, addDoc, deleteDoc, doc, updateDoc, increment } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, addDoc, deleteDoc, doc, updateDoc, increment } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import type { Comment } from '../types';
 import ReportModal from './ReportModal';
