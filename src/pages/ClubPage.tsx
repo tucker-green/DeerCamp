@@ -17,7 +17,12 @@ export default function ClubPage() {
     const isManager = activeMembership?.role === 'owner' || activeMembership?.role === 'manager';
 
     if (!activeClubId) {
-        return <NoClubSelected title="No Club Selected" message="Select or join a club to view club details." />;
+        return (
+            <NoClubSelected
+                title="No Club Selected"
+                message="You aren't in a club yet. Check out the public feed to see what's happening."
+            />
+        );
     }
 
     const tabs = [

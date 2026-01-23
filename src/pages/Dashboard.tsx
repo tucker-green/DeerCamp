@@ -21,6 +21,7 @@ import {
     MyBookingsPreview,
     ClubLeaderboard
 } from '../components/dashboard';
+import NoClubSelected from '../components/NoClubSelected';
 
 const Dashboard = () => {
     const { activeClubId, activeClub } = useAuth();
@@ -76,6 +77,16 @@ const Dashboard = () => {
                     <p className="text-gray-400 text-lg">Loading dashboard...</p>
                 </div>
             </div>
+        );
+    }
+
+    if (!activeClubId) {
+        return (
+            <NoClubSelected
+                title="No Club Selected"
+                message="You aren't in a club yet. Check out the public feed to see what's happening."
+                showFeedButton
+            />
         );
     }
 
